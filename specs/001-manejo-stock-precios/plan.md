@@ -43,7 +43,7 @@ explícita); sin resguardo de datos (fuera de alcance, riesgo asumido); una úni
 normalización de títulos compartida por todos los flujos
 
 **Scale/Scope**: 1 usuaria, ~2.000 libros, archivos de hasta 5.000 filas, 8 historias de usuario,
-39 requerimientos funcionales
+42 requerimientos funcionales
 
 ## Constitution Check
 
@@ -71,7 +71,7 @@ cambió ninguna postura entre las dos pasadas; se anota una sola vez con lo que 
 - [x] **IV. Cero secretos** — PASS. No hay credenciales: sin autenticación, sin servicios externos.
       El modelo CLIP se descarga de un repositorio público sin token. `.gitignore` debe cubrir
       `*.db`, `*.db-wal`, `*.db-shm`, `*.xlsx` y `.env*`.
-- [x] **V. Alcance anclado al PRD** — PASS. Los 39 FR trazan a los 27 RF del PRD; los invariantes
+- [x] **V. Alcance anclado al PRD** — PASS. Los 42 FR trazan a los 30 RF del PRD; los invariantes
       FR-027 a FR-029 trazan a los principios II y III. El plan **no** agrega capacidades: las tres
       cuestiones abiertas que necesitarían alcance nuevo quedan listadas como pendientes de enmienda
       en lugar de resolverse por cuenta propia (ver abajo).
@@ -86,16 +86,20 @@ elige `exceljs`. La cláusula "o similar" lo permite; el motivo está en
 SheetJS publicada en npm está congelada con advisories conocidos y las corregidas se distribuyen
 fuera de npm.
 
-**Pendientes que el plan deliberadamente no resuelve** (Principio V: requieren enmienda del PRD, no
-criterio del implementador):
+**Sin pendientes de producto.** La primera versión de este plan listaba cinco cuestiones que
+necesitaban enmienda del PRD antes de poder cerrarse; todas se resolvieron con enmiendas posteriores,
+así que ninguna historia se implementa sobre un supuesto:
 
-| Ítem | Qué falta | Impacto en la implementación |
+| Ítem | Decisión | Enmienda |
 |---|---|---|
-| CHK007 / CHK008 | Precedencia cuando una fila cae en varias categorías, y qué pasa con la segunda ocurrencia si la primera es inválida | El parseo y el vocabulario de categorías se construyen ya; la función de clasificación final espera la regla |
-| CHK010 | Si la casi-coincidencia aplica también al alta masiva | Hoy no: una casi-coincidencia en alta masiva crea un libro casi-duplicado sin aviso. Hueco de calidad conocido |
-| CHK024 / CHK025 | Si un archivado puede recibir edición manual, y si sólo un activo puede venderse | Se implementa "sólo activos" y se marca en los tests como supuesto a confirmar |
+| CHK007 / CHK008 | Precedencia de clasificación de filas: primero `invalida`, después `duplicada_en_archivo` (posicional), y al final las que dependen del catálogo | RF-28, AC-30, AC-31 |
+| CHK009 | Categorías mutuamente excluyentes; casi-coincidencia de archivado → `coincide_archivado` | RF-08, AC-32 |
+| CHK010 | En alta masiva sólo hay coincidencia **exacta**: una variante de edición es un **libro nuevo** y conviven | RF-19, AC-33 |
+| CHK024 / CHK025 | Sobre un archivado no se modifica stock ni precio ni se vende; sí título, editorial y reactivación | RF-29, AC-34, AC-35 |
+| CHK012 | Reconocimiento de encabezados: primera hoja, primera fila no vacía, sin sinónimos, columna obligatoria repetida = rechazo | RF-30, AC-36, AC-37 |
 
-Ninguno bloquea el arranque. Sí bloquean el cierre de las historias que tocan.
+Lo que queda abierto en `checklists/integridad.md` son enunciados por precisar y verificaciones a
+instrumentar, ninguno bloqueante para implementar ni testear.
 
 ## Project Structure
 
@@ -112,7 +116,7 @@ specs/001-manejo-stock-precios/
 ├── spec.md              # /speckit-specify output
 ├── checklists/
 │   ├── requirements.md  # calidad de la spec — 16/16
-│   └── integridad.md    # calidad de requerimientos — 4/29 resueltos
+│   └── integridad.md    # calidad de requerimientos — 20/29 resueltos
 └── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
@@ -135,16 +139,19 @@ src/
 │   ├── casi-coincidencia.ts      # léxico de variantes de edición
 │   ├── validar-libro.ts          # validación compartida por todos los flujos
 │   ├── precio.ts                 # conversión y redondeo a centavos
-│   └── categorias-fila.ts        # vocabulario de clasificación de filas
+│   ├── categorias-fila.ts        # vocabulario y precedencia de clasificación
+│   └── resultado.ts              # Resultado<T> y ErrorNegocio (contrato)
 ├── db/
 │   ├── conexion.ts               # apertura, WAL, foreign_keys
 │   ├── esquema.sql               # DDL con UNIQUE y CHECK
-│   └── migraciones.ts
+│   ├── migraciones.ts
+│   └── transaccion.ts            # helper que envuelve dato + historial
 ├── services/                     # casos de uso transaccionales
 │   ├── catalogo.ts               # alta, edición, archivar, reactivar
 │   ├── operacion.ts              # venta, cambios de precio y stock
-│   ├── importacion-precios.ts    # flujo de precios + reporte persistido
+│   ├── importacion-precios.ts    # flujo de precios
 │   ├── importacion-alta.ts       # flujo de alta masiva
+│   ├── reportes.ts               # persistencia y consulta de reportes
 │   ├── busqueda.ts               # texto y archivados
 │   ├── historial.ts              # consulta y filtros
 │   └── foto.ts                   # embeddings y ranking por coseno
@@ -152,9 +159,14 @@ src/
     ├── leer.ts                   # lectura por streaming, detección de columnas
     └── clasificar.ts             # fila cruda → categoría
 
+scripts/
+└── sembrar.ts                    # catálogo de prueba de ~2.000 libros (RNF-01)
+
 tests/
 ├── unit/                         # domain/ — sin base de datos
 ├── integration/                  # services/ — base en archivo temporal por test
+├── helpers/
+│   └── db-temporal.ts            # base aislada por test
 └── fixtures/
     ├── excel/                    # .xlsx sintéticos por categoría de fila
     └── fotos/                    # set de validación de AC-12

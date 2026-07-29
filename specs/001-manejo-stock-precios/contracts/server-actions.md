@@ -144,9 +144,10 @@ function buscarPorFoto(input: {
 type Candidato = LibroResumen & { similitud: number }  // coseno en [-1, 1], orden descendente
 ```
 
-Devuelve `[]` cuando ningún libro supera el umbral mínimo: la spec prohíbe devolver un libro
-arbitrario (US8 esc. 3). Nunca devuelve un único resultado presentado como certeza — el contrato es
-una lista, siempre (FR-029).
+Devuelve `[]` cuando ningún libro supera el **umbral de coseno de 0,75** definido en
+[research.md § R1](../research.md#r1--búsqueda-por-foto-rf-11-rnf-02-ac-12): la spec prohíbe
+devolver un libro arbitrario (US8 esc. 3). Nunca devuelve un único resultado presentado como
+certeza — el contrato es una lista, siempre (FR-029).
 
 ```ts
 // FR-025, FR-026

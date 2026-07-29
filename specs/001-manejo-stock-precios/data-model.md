@@ -24,6 +24,7 @@ La unidad del catálogo. Nunca se borra físicamente.
 | `titulo` | `TEXT NOT NULL` | No vacío tras recortar (FR-002) |
 | `titulo_normalizado` | `TEXT NOT NULL` | Derivado de `titulo` por `normalizarTitulo` (R3). **`UNIQUE`** |
 | `editorial` | `TEXT NOT NULL` | No vacía tras recortar (FR-002) |
+| `editorial_normalizada` | `TEXT NOT NULL` | Derivada de `editorial`: minúsculas, sin acentos, espacios colapsados. **No** participa de ninguna clave |
 | `foto` | `BLOB NULL` | Opcional (FR-001) |
 | `foto_embedding` | `BLOB NULL` | 512 floats del embedding CLIP (R1). Presente si y sólo si hay `foto` |
 | `stock` | `INTEGER NOT NULL` | `>= 0`, entero (FR-002) |
@@ -200,14 +201,21 @@ archivo contra el mismo catálogo produce siempre las mismas categorías.
 |---|---|
 | `UNIQUE(libro.titulo_normalizado)` | Clave del catálogo; sostiene FR-004/FR-033/FR-037 en la base |
 | `libro(estado)` | Filtrar activos en cada búsqueda (FR-005) y archivados en FR-034 |
-| `libro(editorial)` | Búsqueda por editorial (FR-005) |
+| `libro(editorial_normalizada)` | Búsqueda por editorial (FR-005) |
 | `movimiento_precio(libro_id, fecha)` | Historial por libro y filtro por fecha (FR-026) |
 | `movimiento_stock(libro_id, fecha)` | Ídem |
 | `venta(libro_id, fecha)` | Ídem |
 
-La búsqueda por nombre se resuelve sobre `titulo_normalizado` con `LIKE '%…%'`. A 2.000 filas eso
-es un scan de tabla de microsegundos: **no hace falta FTS5** para cumplir RNF-01. Si el catálogo
-creciera un orden de magnitud, FTS5 es el siguiente paso natural.
+**Semántica de la búsqueda (FR-005)**: tanto por título como por editorial se matchea por
+**subcadena** sobre la columna normalizada correspondiente (`titulo_normalizado`,
+`editorial_normalizada`), con el término de búsqueda pasado por la misma normalización. El motivo de
+normalizar también la editorial: `LIKE` en SQLite ignora mayúsculas **sólo en ASCII**, así que sin
+columna derivada buscar `anagrama` no encontraría `Anagramá` ni `ANAGRAMA` con acento. La
+normalización de editorial es más simple que la de título — no toca artículos ni puntuación, porque
+no es una clave y no participa del matcheo de los Excel.
+
+A 2.000 filas, `LIKE '%…%'` es un scan de tabla de microsegundos: **no hace falta FTS5** para
+cumplir RNF-01. Si el catálogo creciera un orden de magnitud, FTS5 es el siguiente paso natural.
 
 ---
 

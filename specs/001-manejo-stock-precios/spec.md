@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "@PRD.md" — PRD-001: Manejo de Stock — Puentes de Papel (22 RF, 2 RNF, 21 AC)
+**Input**: User description: "@PRD.md" — PRD-001: Manejo de Stock — Puentes de Papel. Partió de 22 RF / 2 RNF / 21 AC; tras las enmiendas de `/speckit-clarify`, del checklist de integridad y de la definición de precedencia, el PRD vigente tiene **30 RF / 3 RNF / 37 AC**
 
 ## Clarifications
 
@@ -83,20 +83,25 @@ reporte lista las demás con su motivo. Sólo necesita el modelo de libro de US1
 1. **Dado** un archivo Excel de alta masiva, **cuando** se sube: si contiene las columnas
    *libro*, *editorial*, *stock* y *precio* el sistema lo acepta y lee su contenido; si le
    falta alguna, lo rechaza con un mensaje y no crea ni modifica ningún libro.
-2. **Dado** un Excel de alta masiva aceptado, **cuando** se procesa, **entonces** por cada
+2. **Dado** un Excel cuyo encabezado está en la primera fila no vacía de la primera hoja, con
+   nombres que difieren sólo en mayúsculas, acentos o espacios sobrantes, y con columnas extra,
+   **cuando** se sube, **entonces** se acepta y las columnas extra se ignoran; **y dado** un
+   encabezado con un sinónimo o con una columna obligatoria repetida, **entonces** se rechaza y el
+   mensaje lista los encabezados encontrados.
+3. **Dado** un Excel de alta masiva aceptado, **cuando** se procesa, **entonces** por cada
    fila válida cuyo título normalizado no coincide con ningún libro existente (ni activo ni
    archivado) se crea un libro con su título, editorial, stock y precio, persistido y
    recuperable en una consulta posterior.
-3. **Dada** una fila válida que crea un libro nuevo con stock S y precio P, **cuando** se
+4. **Dada** una fila válida que crea un libro nuevo con stock S y precio P, **cuando** se
    crea el libro, **entonces** se agrega una entrada en el historial de stock (fecha,
    cantidad anterior 0, cantidad resultante S, origen "alta por Excel") **y** una entrada en
    el historial de precio (fecha, precio anterior 0, nuevo precio P, origen "alta por Excel").
-4. **Dado** un Excel de alta masiva procesado, **cuando** hay filas duplicadas (título
+5. **Dado** un Excel de alta masiva procesado, **cuando** hay filas duplicadas (título
    normalizado coincide con un libro activo) o inválidas (falta *libro*, *editorial*,
    *stock* o *precio*; o *stock* no es entero ≥ 0; o *precio* no es número > 0),
    **entonces** esas filas no crean ni modifican ningún libro y se listan en un reporte con
    la cantidad y el motivo de cada omisión.
-5. **Dado** un Excel de alta masiva con dos o más filas cuyos títulos normalizan al mismo
+6. **Dado** un Excel de alta masiva con dos o más filas cuyos títulos normalizan al mismo
    valor, **cuando** se procesa, **entonces** sólo la primera ocurrencia se procesa y cada
    duplicada posterior se lista en el reporte con el motivo "duplicada dentro del archivo".
 
@@ -269,6 +274,10 @@ atajo a reactivar llega con esta historia.
    Excel de alta masiva— fijando exactamente los mismos S y P, **entonces** las dos entradas de
    historial se escriben igual, porque la reactivación es la única excepción a "sin cambio ⇒ sin
    historial".
+8. **Dado** un libro archivado, **cuando** la librera intenta modificar su stock o su precio, o
+   marcarlo como vendido, **entonces** el sistema lo impide con un mensaje y no modifica nada ni
+   escribe historial; **y cuando** modifica su título o su editorial, o lo reactiva, **entonces**
+   la operación se permite.
 
 ---
 
@@ -327,8 +336,13 @@ candidatos de la lista.
 
 ### Edge Cases
 
-- **Excel sin columnas obligatorias** → se rechaza el archivo completo con un mensaje; no se
-  crea ni modifica ningún dato.
+- **Excel sin columnas obligatorias** → se rechaza el archivo completo con un mensaje que lista los
+  encabezados encontrados; no se crea ni modifica ningún dato.
+- **Encabezado con un sinónimo** (*"importe"* en lugar de *precio*) → se rechaza: el sistema no
+  interpreta la intención del archivo. El mensaje lista lo que encontró para que se pueda corregir.
+- **Columna obligatoria repetida** (dos columnas *precio*) → se rechaza: elegir una sería adivinar.
+- **Libro de Excel con varias hojas** → se usa sólo la primera; si no tiene las columnas, se rechaza.
+- **Filas vacías o un título arriba del encabezado** → el encabezado es la primera fila no vacía.
 - **Excel vacío o sólo con encabezados** → se acepta y se reporta 0 filas procesadas, sin
   error.
 - **Fila de Excel con celdas en blanco** → se omite y se reporta como inválida indicando el
@@ -351,6 +365,11 @@ candidatos de la lista.
   libro activo no se modifica.
 - **Fila de alta masiva que coincide con un libro archivado** → reactiva el libro con los
   valores nuevos (no crea un segundo libro).
+- **Fila de alta masiva que es variante de edición de un libro existente** → se crea como libro
+  **nuevo**; ambos conviven. La casi-coincidencia no aplica a este flujo (FR-017).
+- **Intento de modificar stock, precio o vender un libro archivado** → se impide con un mensaje,
+  sin modificar nada ni escribir historial (FR-038). Corregir su título o su editorial, en cambio,
+  sí está permitido.
 - **Alta manual de un título que ya existe archivado** → se impide y se informa que existe
   archivado, ofreciendo reactivarlo, en lugar de crear un duplicado.
 - **Fila de Excel con dos candidatos (un activo y un archivado con el mismo título)** →
@@ -402,12 +421,13 @@ a todos los flujos.
 
 **Operación diaria**
 
-- **FR-007**: El sistema MUST permitir modificar el precio de un libro. *(RF-02)*
-- **FR-008**: El sistema MUST permitir modificar manualmente la cantidad en stock de un
-  libro. *(RF-03)*
-- **FR-009**: El sistema MUST permitir marcar un libro como vendido, descontando una unidad
-  de stock y registrando la venta con su fecha y con el precio vigente del libro en ese
-  momento. *(RF-05, RF-12)*
+- **FR-007**: El sistema MUST permitir modificar el precio de un libro **activo**, y MUST
+  impedirlo sobre un libro archivado (FR-038). *(RF-02, RF-29)*
+- **FR-008**: El sistema MUST permitir modificar manualmente la cantidad en stock de un libro
+  **activo**, y MUST impedirlo sobre un libro archivado (FR-038). *(RF-03, RF-29)*
+- **FR-009**: El sistema MUST permitir marcar como vendido un libro **activo**, descontando una
+  unidad de stock y registrando la venta con su fecha y con el precio vigente del libro en ese
+  momento. Un libro archivado MUST NOT poder venderse (FR-038). *(RF-05, RF-12, RF-29)*
 - **FR-010**: El sistema MUST impedir marcar como vendido un libro con stock 0, sin alterar
   el stock ni registrar venta. *(RF-05)*
 - **FR-011**: El sistema MUST permitir dar de baja un libro mediante baja lógica
@@ -438,7 +458,10 @@ a todos los flujos.
   actualización de precios, y MUST rechazarlo con un mensaje si falta alguna columna.
   *(RF-18)*
 - **FR-017**: El sistema MUST crear un libro por cada fila válida cuyo título normalizado no
-  coincida con ningún libro existente (ni activo ni archivado). *(RF-19)*
+  coincida con ningún libro existente (ni activo ni archivado). En este flujo la comparación es
+  **sólo por coincidencia exacta**: una variante de edición es un **libro distinto** y se crea
+  como tal — si existe "El Principito", la fila "El Principito (tapa dura)" crea un libro nuevo y
+  ambos conviven. La casi-coincidencia (FR-015) MUST NOT aplicarse acá. *(RF-19)*
 - **FR-018**: El sistema MUST reactivar el libro **archivado** cuyo título normalizado
   coincida con una fila válida del Excel de alta masiva, actualizando su stock y su precio
   con los valores de la fila. *(RF-20)*
@@ -508,8 +531,8 @@ a todos los flujos.
   (precio anterior 0, nuevo precio el precio inicial), ambas con origen "alta manual".
   *(RF-01, RF-13, RF-14 — enmienda del 2026-07-29; Constitución III)*
 - **FR-032**: El sistema MUST permitir modificar el título y la editorial de un libro
-  existente, y MUST rechazar el cambio con un mensaje si el nuevo título o la nueva editorial
-  quedan vacíos. *(RF-23)*
+  existente —**activo o archivado** (FR-038)—, y MUST rechazar el cambio con un mensaje si el
+  nuevo título o la nueva editorial quedan vacíos. *(RF-23, RF-29)*
 - **FR-033**: El sistema MUST impedir modificar el título de un libro cuando el nuevo título
   normalizado coincida con el de cualquier otro libro existente, **activo o archivado**, con la
   misma regla de unicidad global que aplica al alta (FR-004). *(RF-24)*
@@ -531,6 +554,19 @@ a todos los flujos.
 - **FR-037**: El sistema MUST impedir el alta de dos libros con el mismo título normalizado
   aunque tengan editoriales distintas: la editorial **no** forma parte de la clave. *(RF-17,
   PRD §8 Restricciones)*
+- **FR-038**: Sobre un libro **archivado** el sistema MUST impedir modificar el stock y el precio
+  —incluida la venta, que descuenta stock— y MUST permitir modificar su título y su editorial
+  (FR-032, sujeto a FR-033) y reactivarlo (FR-035). Recíprocamente, FR-007, FR-008 y FR-009 sólo
+  aplican a libros **activos**. *(RF-29)*
+- **FR-039**: El sistema MUST reconocer los encabezados de un Excel con estas reglas, comunes a los
+  dos flujos: **(a)** usar únicamente la **primera hoja**; **(b)** tomar como encabezado la
+  **primera fila no vacía**; **(c)** comparar los nombres recortando espacios y sin distinguir
+  mayúsculas ni acentos; **(d)** **no** aceptar sinónimos — el nombre debe coincidir con el
+  declarado, porque interpretar "importe" o "costo" como precio de venta sería adivinar la intención
+  del archivo (FR-029); **(e)** ignorar las columnas extra sin error; **(f)** **rechazar** el archivo
+  si una columna obligatoria aparece repetida, porque elegir una de las dos sería adivinar. Todo
+  rechazo por encabezados MUST indicar qué columnas faltan o están repetidas **y listar los
+  encabezados encontrados**. *(RF-30)*
 
 ### Key Entities
 
@@ -594,8 +630,9 @@ a todos los flujos.
 - **Casi-coincidencia calibrada por ejemplos**: el PRD no fija un umbral numérico de
   similitud; la regla se valida contra un conjunto fijo de ejemplos conocidos de variantes de
   edición (AC-10). El conjunto de ejemplos es el criterio de aceptación.
-- **Formato de los Excel**: una única hoja, primera fila de encabezados, nombres de columna
-  reconocidos sin distinguir mayúsculas ni acentos. Columnas extra se ignoran sin error.
+- **Formato de los Excel**: las reglas concretas de reconocimiento de encabezados están en FR-039
+  (primera hoja, primera fila no vacía, comparación sin espacios ni mayúsculas ni acentos, sin
+  sinónimos, columnas extra ignoradas, columna obligatoria repetida = rechazo).
 - **Volumen de referencia**: catálogo de aproximadamente **2.000 libros** y archivos Excel de
   hasta **5.000 filas**. Es la escala contra la que se verifican SC-001, SC-002 y SC-004; no es
   un límite duro del sistema, es la magnitud de diseño y de prueba.
@@ -656,5 +693,6 @@ constitución (primero se enmienda el PRD, después se implementa):
   exige las dos entradas iniciales. Deja el alta manual simétrica con el alta por Excel
   (AC-19) y cierra el hueco frente al Principio III. Recogido en FR-031, FR-022 y FR-023.
 - **Q2 — edición de título y editorial → resuelto: sí, en alcance**. Nuevos RF-23 y RF-24 en
-  el PRD, con AC-23 y AC-24. La colisión de títulos al editar se rechaza contra libros activos
-  (misma regla que RF-17). Recogido en FR-032 y FR-033, y en los escenarios 4 a 6 de US4.
+  el PRD, con AC-23 y AC-24. La colisión de títulos al editar se rechaza contra **cualquier** libro,
+  activo o archivado (misma regla de unicidad global que RF-17, ver Q1 arriba). Recogido en FR-032 y
+  FR-033, y en los escenarios 4 a 6 de US4.

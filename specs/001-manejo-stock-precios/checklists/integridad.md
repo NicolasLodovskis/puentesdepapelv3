@@ -16,21 +16,21 @@ ingesta de Excel, trazabilidad del historial, e identidad y ciclo de vida del li
 ## Identidad y normalización de títulos
 
 - [x] CHK001 ¿Está definido si la unicidad se aplica al título solo o al par (título, editorial)? Una librería stockea normalmente el mismo título de dos editoriales distintas, y el Excel de alta masiva tiene columna *editorial*, pero hoy la unicidad es sólo por título y lo bloquea. [Conflict, §FR-004, §FR-033, PRD RF-17] → **Resuelto 2026-07-29**: la editorial NO se agrega a la clave. Decisión explícita, registrada como Restricción en PRD §8 con el workaround (diferenciar en el título) + FR-037, AC-29 y US1 esc. 6.
-- [ ] CHK002 ¿Está especificada la regla de "ignorando el orden del artículo": qué artículos abarca y en qué posiciones del título se aplican? [Ambiguity, §FR-003]
-- [ ] CHK003 ¿Está definido si la normalización elimina el contenido entre paréntesis o lo conserva como palabras? De eso depende que la lógica de casi-coincidencia sea siquiera alcanzable. [Gap, §FR-003, §FR-015]
-- [ ] CHK004 ¿Está documentado en algún lado el conjunto de ejemplos que calibra la casi-coincidencia, o sólo se lo menciona como criterio de aceptación sin existir? [Gap, §Assumptions, §FR-015]
-- [ ] CHK005 ¿Es "comparte el núcleo del título difiriendo sólo en variantes de edición entre paréntesis" medible objetivamente, sin depender de criterio humano caso por caso? [Measurability, §FR-015]
-- [ ] CHK006 ¿Está especificado el tratamiento de espacios múltiples, guiones, comillas tipográficas y numerales romanos en la normalización? [Completeness, §FR-003]
+- [x] CHK002 ¿Está especificada la regla de "ignorando el orden del artículo": qué artículos abarca y en qué posiciones del título se aplican? [Ambiguity, §FR-003] → **Resuelto 2026-07-29 (fase de plan)**: orden del artículo definido en research.md § R3: conjunto cerrado `el, la, los, las, lo, un, una, unos, unas`, quitado tanto al inicio como en la forma `"Titulo, El"`.
+- [x] CHK003 ¿Está definido si la normalización elimina el contenido entre paréntesis o lo conserva como palabras? De eso depende que la lógica de casi-coincidencia sea siquiera alcanzable. [Gap, §FR-003, §FR-015] → **Resuelto 2026-07-29 (fase de plan)**: los paréntesis se eliminan pero **su contenido se conserva como palabras** (research.md § R3), que es lo que hace alcanzable la casi-coincidencia.
+- [x] CHK004 ¿Está documentado en algún lado el conjunto de ejemplos que calibra la casi-coincidencia, o sólo se lo menciona como criterio de aceptación sin existir? [Gap, §Assumptions, §FR-015] → **Resuelto 2026-07-29 (fase de plan)**: el set de ejemplos de AC-10 se materializa como tabla de casos en T056 (`tests/unit/casi-coincidencia.test.ts`).
+- [x] CHK005 ¿Es "comparte el núcleo del título difiriendo sólo en variantes de edición entre paréntesis" medible objetivamente, sin depender de criterio humano caso por caso? [Measurability, §FR-015] → **Resuelto 2026-07-29 (fase de plan)**: convertido en predicado determinista: superconjunto por palabras completas con léxico cerrado de variantes de edición (research.md § R4). Sin umbral difuso.
+- [x] CHK006 ¿Está especificado el tratamiento de espacios múltiples, guiones, comillas tipográficas y numerales romanos en la normalización? [Completeness, §FR-003] → **Resuelto 2026-07-29 (fase de plan)**: research.md § R3 fija los 6 pasos, incluidos espacios múltiples y comillas/guiones tipográficos.
 
 ## Ingesta de Excel: precedencia de reglas y reporte
 
 - [x] CHK007 ¿Está definido el orden de evaluación cuando una fila cae en más de una categoría a la vez (inválida + duplicada dentro del archivo + casi-coincidencia)? [Gap, §FR-015, §FR-019, §FR-021] → **Resuelto 2026-07-29**: orden de precedencia definido en PRD RF-28 y spec FR-021b: primero `invalida`, después `duplicada_en_archivo`, y al final las que dependen del catálogo. AC-30 nuevo.
 - [x] CHK008 ¿Está definido qué ocurre con la segunda ocurrencia cuando la **primera** ocurrencia de un título duplicado dentro del archivo es inválida? ¿Se procesa la segunda o se descarta como duplicada de algo que nunca se aplicó? [Ambiguity, §FR-021] → **Resuelto 2026-07-29**: la duplicación dentro del archivo es **posicional**: si la primera ocurrencia es inválida, la posterior tampoco se aplica. PRD RF-22 ampliado, AC-31 nuevo.
 - [x] CHK009 ¿Está definido si una casi-coincidencia cuenta además como "sin coincidencia" en el reporte, o si las categorías son mutuamente excluyentes? [Ambiguity, §FR-014, §FR-015] → **Resuelto 2026-07-29**: las categorías son mutuamente excluyentes por el orden de FR-021b. Y una casi-coincidencia de un libro **archivado** va a `coincide_archivado`, no a `casi_coincidencia` ni a `sin_coincidencia`. PRD RF-08 ampliado, AC-32 nuevo.
-- [ ] CHK010 ¿Está especificado el comportamiento de casi-coincidencia para el flujo de **alta masiva**, o sólo para el de precios? Tal como está, una casi-coincidencia en alta masiva crea un libro casi-duplicado sin ningún aviso. [Gap, §FR-015, §FR-017]
+- [x] CHK010 ¿Está especificado el comportamiento de casi-coincidencia para el flujo de **alta masiva**, o sólo para el de precios? Tal como está, una casi-coincidencia en alta masiva crea un libro casi-duplicado sin ningún aviso. [Gap, §FR-015, §FR-017] → **Resuelto 2026-07-29**: en alta masiva se evalúa **sólo coincidencia exacta**: una variante de edición es un **libro nuevo** y conviven. Intencional — acá la librera carga su propio inventario. PRD RF-19 ampliado, AC-33.
 - [ ] CHK011 ¿Están definidas las categorías del reporte de forma exhaustiva y mutuamente excluyente, de modo que la suma de todas dé exactamente el total de filas del archivo? [Completeness, §FR-030, §Key Entities]
-- [ ] CHK012 ¿Está definido el criterio de reconocimiento de encabezados más allá de mayúsculas y acentos: espacios sobrantes, sinónimos ("precio unitario"), y qué hacer si una columna obligatoria aparece repetida? [Gap, §Assumptions, §FR-012, §FR-016]
-- [ ] CHK013 ¿Están especificadas la precisión decimal y la regla de redondeo admitidas para el precio, y si existe un valor máximo? "Número > 0" no acota ninguna de las tres cosas. [Gap, §FR-002, §FR-019]
+- [x] CHK012 ¿Está definido el criterio de reconocimiento de encabezados más allá de mayúsculas y acentos: espacios sobrantes, sinónimos ("precio unitario"), y qué hacer si una columna obligatoria aparece repetida? [Gap, §Assumptions, §FR-012, §FR-016] → **Resuelto 2026-07-29**: regla completa en PRD RF-30 y spec FR-039 — primera hoja, primera fila no vacía, sin espacios/mayúsculas/acentos, **sin sinónimos**, columnas extra ignoradas, y columna obligatoria repetida = rechazo. Todo rechazo lista los encabezados encontrados. AC-36 y AC-37.
+- [x] CHK013 ¿Están especificadas la precisión decimal y la regla de redondeo admitidas para el precio, y si existe un valor máximo? "Número > 0" no acota ninguna de las tres cosas. [Gap, §FR-002, §FR-019] → **Resuelto 2026-07-29 (fase de plan)**: precio como **entero de centavos**, 2 decimales, redondeo al centavo en la lectura de Excel (research.md § R5).
 - [ ] CHK014 ¿Está definido si la atomicidad es por archivo o sólo por fila, y qué queda aplicado si el procesamiento se interrumpe a mitad de un archivo largo? [Clarity, §Edge Cases, §FR-027]
 - [x] CHK015 ¿Es viable actuar sobre el reporte sin persistirlo, a la escala de 5.000 filas que fija RNF-03? Un reporte de cientos de filas omitidas, en pantalla y no revisitable, contradice el propósito de FR-030. [Conflict, §Assumptions, §FR-030, §FR-030b] → **Resuelto 2026-07-29**: el reporte del flujo de **actualización de precios** se persiste y es consultable (RF-27, FR-036, AC-28, US5 esc. 9). El de alta masiva sigue siendo sólo en pantalla, por decisión.
 
@@ -38,17 +38,17 @@ ingesta de Excel, trazabilidad del historial, e identidad y ciclo de vida del li
 
 - [x] CHK016 ¿Se resuelve el conflicto entre FR-027b (valor igual ⇒ sin historial) y FR-035 / US6 esc. 2 y 5, que exigen **ambas** entradas al reactivar aunque el stock o el precio coincidan con los que ya tenía? [Conflict, §FR-027b, §FR-035, §FR-018] → **Resuelto 2026-07-29**: la reactivación es la única excepción a FR-027b y siempre escribe sus dos entradas. RF-13/RF-14 con la cláusula de excepción, AC-20 y AC-26 actualizados, US6 esc. 7 nuevo.
 - [x] CHK017 ¿Está definido si la reactivación debe distinguirse de una edición manual común en el historial? Hoy las dos escriben origen "edición manual", así que el historial no permite reconstruir que hubo una reactivación. [Consistency, §FR-035, §FR-022, §FR-023] → **Resuelto 2026-07-29** junto con CHK016: origen propio **"reactivación"**, agregado a la enumeración de RF-13/RF-14 y de FR-022/FR-023.
-- [ ] CHK018 ¿Está especificada la precisión de la fecha del historial (fecha sola o fecha con hora) y su zona horaria? El filtrado por fecha y el orden de los registros dependen de eso. [Gap, §FR-022, §FR-023, §FR-024, §FR-026]
-- [ ] CHK019 ¿Está definido el criterio de orden de los registros de historial cuando comparten la misma marca de tiempo, por ejemplo las dos entradas que genera un alta? [Gap, §FR-025, §FR-031]
-- [ ] CHK020 ¿Está definida la vinculación entre una venta y el movimiento de stock que la acompaña, de modo que ambos historiales sean reconciliables entre sí? [Gap, §FR-009, §FR-024]
+- [x] CHK018 ¿Está especificada la precisión de la fecha del historial (fecha sola o fecha con hora) y su zona horaria? El filtrado por fecha y el orden de los registros dependen de eso. [Gap, §FR-022, §FR-023, §FR-024, §FR-026] → **Resuelto 2026-07-29 (fase de plan)**: `TEXT` ISO-8601 UTC con milisegundos, mostrado y filtrado en zona local (research.md § R6).
+- [x] CHK019 ¿Está definido el criterio de orden de los registros de historial cuando comparten la misma marca de tiempo, por ejemplo las dos entradas que genera un alta? [Gap, §FR-025, §FR-031] → **Resuelto 2026-07-29 (fase de plan)**: orden por marca temporal y, ante empate, por `id` autoincremental (research.md § R6).
+- [x] CHK020 ¿Está definida la vinculación entre una venta y el movimiento de stock que la acompaña, de modo que ambos historiales sean reconciliables entre sí? [Gap, §FR-009, §FR-024] → **Resuelto 2026-07-29 (fase de plan)**: `movimiento_stock.venta_id` vincula el movimiento con su venta (data-model.md).
 - [ ] CHK021 ¿Está especificado si el filtro de historial por título usa el título vigente del libro o el que tenía al momento de cada registro? Interactúa directamente con la decisión de no historizar los renombres. [Ambiguity, §FR-026, §FR-032]
 - [ ] CHK022 ¿Es objetivamente verificable el carácter append-only del historial, o el requerimiento sólo declara que no se ofrece la función de borrado? [Measurability, §FR-028]
 - [ ] CHK023 ¿Están los orígenes válidos enumerados de forma completa y coincidente entre FR-022, FR-023 y lo que cada flujo declara escribir? [Consistency, §FR-022, §FR-023]
 
 ## Ciclo de vida del libro
 
-- [ ] CHK024 ¿Está especificado si un libro **archivado** puede recibir edición manual de precio o de stock? FR-007 y FR-008 no se restringen a activos, lo que abre una puerta lateral a la regla de que los archivados no se modifican. [Gap, §FR-007, §FR-008, §FR-011, §FR-013]
-- [ ] CHK025 ¿Está especificado que sólo un libro activo puede marcarse como vendido? El requerimiento se apoya en que los archivados no aparecen en la búsqueda, pero no lo declara como restricción. [Gap, §FR-009, §FR-011]
+- [x] CHK024 ¿Está especificado si un libro **archivado** puede recibir edición manual de precio o de stock? FR-007 y FR-008 no se restringen a activos, lo que abre una puerta lateral a la regla de que los archivados no se modifican. [Gap, §FR-007, §FR-008, §FR-011, §FR-013] → **Resuelto 2026-07-29**: un libro archivado **no** recibe edición manual de stock ni de precio, pero **sí** de título y editorial. PRD RF-29 nuevo, AC-34; spec FR-038.
+- [x] CHK025 ¿Está especificado que sólo un libro activo puede marcarse como vendido? El requerimiento se apoya en que los archivados no aparecen en la búsqueda, pero no lo declara como restricción. [Gap, §FR-009, §FR-011] → **Resuelto 2026-07-29**: sólo un libro **activo** puede venderse; la venta descuenta stock, y sobre archivados el stock no se toca. PRD RF-29, AC-34 y AC-35.
 - [ ] CHK026 ¿Está definido el comportamiento al archivar un libro ya archivado o reactivar uno ya activo (idempotencia o rechazo)? [Coverage, §FR-011, §FR-035]
 - [ ] CHK027 ¿Está definido si la consulta de archivados admite búsqueda o filtro, considerando que a la escala de referencia pueden ser cientos de libros? [Completeness, §FR-034]
 
@@ -64,7 +64,7 @@ ingesta de Excel, trazabilidad del historial, e identidad y ciclo de vida del li
 - Link to relevant resources or documentation
 - Items are numbered sequentially for easy reference
 
-### Estado: 4 de 29 resueltos (2026-07-29)
+### Estado: 20 de 29 resueltos (2026-07-29)
 
 Los tres **defectos confirmados** quedaron resueltos por decisión del usuario, más uno que cayó
 de arrastre:
@@ -81,8 +81,22 @@ pidió. Vale registrar que el archivo más grande es el de **alta masiva** (la c
 5.000 filas), así que la asimetría es deliberada pero no obvia — si en la práctica la carga
 inicial deja muchas filas omitidas, ese reporte también va a querer persistirse.
 
-Quedan **25 ítems abiertos**, de impacto medio o bajo. Varios (CHK002, CHK003, CHK006, CHK013,
-CHK018) se cierran fijando reglas concretas sin enmendar el PRD, porque son precisiones de
-requerimientos existentes y no alcance nuevo. Los de mayor valor entre los que quedan:
-**CHK007/CHK008** (precedencia de reglas entre categorías de fila) y **CHK010**
-(casi-coincidencia no definida para alta masiva, que hoy crearía duplicados silenciosos).
+### Cierres posteriores
+
+- **Fase de definición de precedencia**: CHK007 y CHK008 por PRD RF-28 / spec FR-021b, y CHK009 de
+  arrastre al declararse las categorías mutuamente excluyentes.
+- **Fase de plan (`/speckit-plan`)**: nueve ítems que eran decisiones de implementación quedaron
+  cerrados por `research.md` y `data-model.md` — CHK002, CHK003, CHK004, CHK005, CHK006 (normalización
+  y casi-coincidencia), CHK013 (centavos), CHK018 y CHK019 (fecha y orden), CHK020 (`venta_id`).
+
+- **Decisiones de producto sobre ciclo de vida e ingesta**: CHK010 (variante de edición = libro nuevo
+  en alta masiva), CHK024 y CHK025 (restricciones sobre libros archivados) por PRD RF-19 y RF-29, con
+  AC-33 a AC-35.
+
+- **Regla de encabezados**: CHK012 por PRD RF-30 / spec FR-039, con AC-36 y AC-37.
+
+**20 de 29 resueltos; quedan 9 abiertos**, todos de impacto medio o bajo y **ninguno bloqueante**.
+Ya no hay deuda contra el Principio V: no queda ningún comportamiento implementado como supuesto sin
+respaldo en el PRD. Los 9 restantes son enunciados por precisar o verificaciones a instrumentar
+(CHK011, CHK014, CHK022, CHK023, CHK026, CHK027, CHK028, CHK029 y CHK021, este último documentado
+como limitación aceptada).

@@ -21,6 +21,14 @@ coseno por fuerza bruta sobre los vectores guardados en SQLite.**
   vectores de libros **activos** con coseno.
 - Se devuelven los N mejores como candidatos ordenados (FR-006), nunca una única respuesta.
 
+**Umbral de similitud**: se descartan los candidatos con coseno **< 0,75**, y si no queda ninguno
+la consulta devuelve lista vacía en lugar de un libro arbitrario (US8 esc. 3, FR-029). El valor es
+un punto de partida, no una constante sagrada: vive en un único módulo, y **T091 lo calibra contra
+el set de validación** buscando el número que maximice los aciertos de AC-12 sin dejar entrar
+candidatos absurdos cuando la foto no está en el catálogo. Sin un umbral explícito, el test de
+"foto ajena → lista vacía" no sería falsable, porque el coseno siempre devuelve *algo* como mejor
+resultado.
+
 **Rationale**:
 
 - **Cabe holgado en el presupuesto de RNF-02 (<3 s p95)**: el costo real es un único forward
@@ -221,8 +229,16 @@ primero, choca con el Principio I).
 Requieren decisión de producto y enmienda del PRD (Principio V). No bloquean el arranque de la
 implementación, pero sí bloquean las historias que tocan:
 
-| Ítem | Qué falta | Bloquea |
+**Ninguno.** Las cinco cuestiones que esta sección listaba como pendientes de enmienda del PRD se
+resolvieron después de escribir este documento:
+
+| Ítem | Decisión | Enmienda |
 |---|---|---|
-| **CHK007 / CHK008** | Precedencia cuando una fila cae en varias categorías a la vez (inválida + duplicada dentro del archivo + casi-coincidencia), y qué pasa con la segunda ocurrencia cuando la primera es inválida. | Los tests de clasificación de filas de US2 y US5. Se puede implementar el parseo y esperar la regla para la clasificación final. |
-| **CHK010** | Si la casi-coincidencia aplica también al alta masiva. Hoy FR-015 es sólo del flujo de precios, así que una casi-coincidencia en alta masiva **crea un libro casi-duplicado sin aviso**. | Nada duro, pero es un agujero de calidad de datos conocido. |
-| **CHK024 / CHK025** | Si un libro archivado puede recibir edición manual de precio/stock, y si sólo un activo puede venderse. | Las validaciones de US3 y US4. Se asume "sólo activos" en la implementación y se marca en los tests como supuesto a confirmar. |
+| CHK007 / CHK008 | Precedencia de clasificación: `invalida` → `duplicada_en_archivo` (posicional) → catálogo | RF-28, AC-30, AC-31 |
+| CHK009 | Categorías mutuamente excluyentes; casi-coincidencia de archivado → `coincide_archivado` | RF-08, AC-32 |
+| CHK010 | En alta masiva sólo coincidencia **exacta**: una variante de edición es un **libro nuevo** | RF-19, AC-33 |
+| CHK024 / CHK025 | Sobre un archivado: no stock, no precio, no venta; sí título, editorial y reactivación | RF-29, AC-34, AC-35 |
+| CHK012 | Encabezados: primera hoja, primera fila no vacía, sin sinónimos, columna repetida = rechazo | RF-30, AC-36, AC-37 |
+
+Ninguna historia se implementa sobre un supuesto sin respaldo en el PRD. El único riesgo abierto del
+plan sigue siendo el de **R1** (búsqueda por foto), que es técnico y no de producto.

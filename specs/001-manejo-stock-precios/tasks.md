@@ -1,5 +1,4 @@
 ---
-
 description: "Task list for Manejo de Stock y Precios — Puentes de Papel"
 ---
 
@@ -58,7 +57,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Persistencia
 
-- [ ] T015 Escribir el esquema en `src/db/esquema.sql`: las 6 tablas de [data-model.md](./data-model.md), con `UNIQUE(titulo_normalizado)`, los `CHECK` de `origen`, y las FK incluida `movimiento_stock.venta_id`
+- [ ] T015 Escribir el esquema en `src/db/esquema.sql`: las 6 tablas de [data-model.md](./data-model.md), con `UNIQUE(titulo_normalizado)`, la columna derivada `editorial_normalizada`, los `CHECK` de `origen`, y las FK incluida `movimiento_stock.venta_id`
 - [ ] T016 Implementar apertura de conexión con `PRAGMA journal_mode = WAL` y `PRAGMA foreign_keys = ON` en `src/db/conexion.ts`
 - [ ] T017 Implementar migraciones idempotentes en `src/db/migraciones.ts`
 - [ ] T018 [P] Crear helper que provee una base temporal aislada por test en `tests/helpers/db-temporal.ts`
@@ -79,17 +78,17 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Tests for User Story 1 (MANDATORY - write first, must FAIL) ⚠️
 
-- [ ] T023 [P] [US1] Test en rojo de alta en `tests/integration/us1-alta.test.ts`: alta válida persiste y es recuperable; alta con título o editorial vacíos, stock `< 0` o precio `<= 0` se rechaza con mensaje y **no persiste nada**; el alta escribe las dos entradas iniciales de historial con origen `"alta manual"` y valor anterior `0` (FR-001, FR-002, FR-031)
+- [ ] T023 [P] [US1] Test en rojo de alta en `tests/integration/us1-alta.test.ts`: alta válida persiste y es recuperable; alta con título o editorial vacíos, stock `< 0` o precio `<= 0` se rechaza con mensaje y **no persiste nada**; el alta escribe las dos entradas iniciales de historial con origen `"alta manual"` y valor anterior `0`; y el alta **con foto** la deja asociada al libro mientras el alta **sin foto** se acepta igual, porque la foto es opcional (FR-001, FR-002, FR-031, US1 esc. 5)
 - [ ] T024 [P] [US1] Test en rojo de unicidad en `tests/integration/us1-unicidad.test.ts`: rechazo cuando el título normalizado coincide con un libro **activo**; con un libro **archivado**, devolviendo `libroId` y `estado` para poder ofrecer reactivación; y **con editorial distinta**, porque la editorial no forma parte de la clave (FR-004, FR-037)
-- [ ] T025 [P] [US1] Test en rojo de búsqueda en `tests/integration/us1-busqueda.test.ts`: buscar por nombre y por editorial devuelve los activos coincidentes con su precio y **excluye archivados** (FR-005)
+- [ ] T025 [P] [US1] Test en rojo de búsqueda en `tests/integration/us1-busqueda.test.ts`: buscar por nombre y por editorial devuelve los activos coincidentes con su precio y **excluye archivados**; la búsqueda por editorial es insensible a mayúsculas **y a acentos** (buscar `anagrama` encuentra `Anagramá`) y matchea por subcadena (FR-005, [data-model.md](./data-model.md))
 
 ### Implementation for User Story 1
 
 - [ ] T026 [US1] Implementar `altaLibro` en `src/services/catalogo.ts`, en una sola transacción: libro + `movimiento_stock` + `movimiento_precio` (depende de T020)
-- [ ] T027 [P] [US1] Implementar `buscarLibros` en `src/services/busqueda.ts` sobre `titulo_normalizado` y `editorial`, filtrando por `estado = 'activo'`
+- [ ] T027 [P] [US1] Implementar `buscarLibros` en `src/services/busqueda.ts` sobre `titulo_normalizado` y `editorial_normalizada`, por subcadena, filtrando por `estado = 'activo'`
 - [ ] T028 [US1] Server Action de alta en `src/app/actions/catalogo.ts`
 - [ ] T029 [P] [US1] Server Action de búsqueda en `src/app/actions/busqueda.ts`
-- [ ] T030 [US1] Formulario de alta con mensajes de validación por campo en `src/app/libros/nuevo/page.tsx`
+- [ ] T030 [US1] Formulario de alta con mensajes de validación por campo y **campo de foto opcional** en `src/app/libros/nuevo/page.tsx` (la foto se guarda ya; el embedding llega con T089)
 - [ ] T031 [US1] Pantalla de búsqueda y resultado con precio en `src/app/page.tsx`
 - [ ] T032 [P] [US1] Script de siembra de catálogo de prueba de ~2.000 libros en `scripts/sembrar.ts`
 - [ ] T033 [US1] Test de rendimiento RNF-01 (`< 1 s` p95 sobre el catálogo sembrado) en `tests/integration/us1-rendimiento.test.ts` (depende de T032)
@@ -108,22 +107,25 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 - [ ] T034 [P] [US2] Crear fixtures `.xlsx` de alta masiva, uno por categoría de fila, en `tests/fixtures/excel/`
 - [ ] T035 [P] [US2] Test en rojo de columnas en `tests/integration/us2-columnas.test.ts`: con las 4 columnas se acepta; si falta alguna, **rechazo total** sin crear ni modificar nada (FR-016)
-- [ ] T036 [P] [US2] Test en rojo de creación en `tests/integration/us2-creacion.test.ts`: cada fila válida sin coincidencia crea su libro y escribe las dos entradas con origen `"alta por Excel"` y anterior `0` (FR-017)
+- [ ] T035b [P] [US2] Test en rojo de reconocimiento de encabezados en `tests/unit/encabezados.test.ts`, compartido por los dos flujos: se aceptan nombres con espacios sobrantes, mayúsculas y acentos, y las columnas extra se ignoran; se rechaza el sinónimo (*importe* por *precio*) y la **columna obligatoria repetida**, con el mensaje listando los encabezados encontrados; se usa sólo la primera hoja y el encabezado es la primera fila no vacía (FR-039, AC-36, AC-37)
+- [ ] T036 [P] [US2] Test en rojo de creación en `tests/integration/us2-creacion.test.ts`: cada fila válida sin coincidencia crea su libro y escribe las dos entradas con origen `"alta por Excel"` y anterior `0`; y **una variante de edición de un libro existente crea un libro nuevo** en lugar de tratarse como casi-coincidencia, quedando ambos en el catálogo (FR-017, AC-33)
 - [ ] T037 [P] [US2] Test en rojo de reporte en `tests/integration/us2-reporte.test.ts`: `invalida` con el campo que falla, `duplicada_en_archivo`, `duplicada_de_activo` sin modificar el libro existente, y el **invariante de completitud** `filasAplicadas + noAplicadas.length === filasTotales` (FR-019, FR-021, FR-030)
 - [ ] T037b [P] [US2] Test en rojo de precedencia en `tests/unit/clasificar.test.ts`, con una tabla de casos que fuerza cada colisión de FR-021b: campo faltante + título repetido → `invalida`; título repetido + coincide con activo → `duplicada_en_archivo`; **primera ocurrencia inválida y posterior válida → ninguna se aplica** (la primera `invalida`, la posterior `duplicada_en_archivo`); y coincidencia exacta ganando sobre casi-coincidencia (FR-021, FR-021b)
 
 ### Implementation for User Story 2
 
-- [ ] T038 [US2] Implementar lectura por streaming y detección de columnas (sin distinguir mayúsculas ni acentos) en `src/excel/leer.ts`
+- [ ] T038 [US2] Implementar lectura por streaming y el reconocimiento de encabezados de FR-039 en `src/excel/leer.ts`: primera hoja, primera fila no vacía, comparación sin espacios/mayúsculas/acentos, sin sinónimos, columnas extra ignoradas, y rechazo con la lista de encabezados encontrados si falta o se repite una obligatoria
 - [ ] T039 [US2] Implementar la clasificación de filas con el orden de precedencia de FR-021b en `src/excel/clasificar.ts`: primero `invalida`, después `duplicada_en_archivo` (posicional), y al final las que dependen del catálogo. Compartida por los dos flujos (depende de T014)
 - [ ] T040 [US2] Implementar `importacion-alta` con una transacción **por fila** en `src/services/importacion-alta.ts` (depende de T038, T039)
 - [ ] T041 [US2] Route Handler `POST` en `src/app/api/excel/alta-masiva/route.ts`
 - [ ] T042 [US2] Pantalla de subida y reporte en `src/app/excel/alta-masiva/page.tsx`
 - [ ] T043 [US2] Test de volumen RNF-03 (archivo de 5.000 filas, sin fallar ni truncar) en `tests/integration/us2-volumen.test.ts`
 
-> **Hueco conocido (CHK010)**: la casi-coincidencia no aplica a este flujo — FR-021b lo deja
-> explícito: en alta masiva se evalúa sólo coincidencia **exacta**. Una variante de edición crea un
-> libro casi-duplicado sin aviso. Requiere enmienda del PRD, no se resuelve acá.
+> **Resuelto (CHK010)**: en alta masiva se evalúa **sólo coincidencia exacta** y una variante de
+> edición es un **libro nuevo** — si existe "El Principito", la fila "El Principito (tapa dura)" crea
+> otro libro y ambos conviven. Es intencional: acá la librera carga su propio inventario y las
+> ediciones distintas son ejemplares distintos, mientras que en el flujo de precios aplicar el precio
+> a la edición equivocada corrompería un dato. RF-19 ampliado, AC-33.
 
 **Checkpoint**: US1 y US2 funcionan de forma independiente. El sistema ya es usable de verdad.
 
@@ -138,15 +140,15 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 ### Tests for User Story 3 (MANDATORY - write first, must FAIL) ⚠️
 
 - [ ] T044 [P] [US3] Test en rojo de venta en `tests/integration/us3-venta.test.ts`: stock `S → S-1`, `venta` con el precio **vigente al momento**, y `movimiento_stock` con origen `"venta"` y `venta_id` apuntando a esa venta (FR-009, FR-023, FR-024)
-- [ ] T045 [P] [US3] Test en rojo de bloqueo en `tests/integration/us3-venta-bloqueada.test.ts`: con stock `0` se impide sin alterar stock ni registrar venta; y cambiar el precio después **no** altera una venta ya registrada (FR-010)
+- [ ] T045 [P] [US3] Test en rojo de bloqueo en `tests/integration/us3-venta-bloqueada.test.ts`: con stock `0` se impide sin alterar stock ni registrar venta; un libro **archivado** no puede venderse aunque tenga stock; y cambiar el precio después **no** altera una venta ya registrada (FR-010, FR-038)
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] Implementar `venderUnidad` en `src/services/operacion.ts`, todo en una transacción
+- [ ] T046 [US3] Implementar `venderUnidad` en `src/services/operacion.ts`, todo en una transacción, rechazando libros archivados (FR-038)
 - [ ] T047 [US3] Server Action de venta en `src/app/actions/operacion.ts`
 - [ ] T048 [US3] Acción de vender desde el resultado de búsqueda en `src/app/page.tsx`
 
-> **Supuesto a confirmar (CHK025)**: se implementa que **sólo un libro activo** puede venderse. La spec no lo declara explícitamente; marcar el test como supuesto.
+> **Resuelto (CHK025)**: sólo un libro **activo** puede venderse — ahora es RF-29 / FR-038, con AC-34 y AC-35. Ya no es un supuesto.
 
 **Checkpoint**: la operación diaria de venta funciona.
 
@@ -162,16 +164,17 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 - [ ] T049 [P] [US4] Test en rojo de edición en `tests/integration/us4-edicion.test.ts`: cambiar precio y stock guarda el valor y escribe su entrada con anterior, nuevo y origen `"edición manual"`; valores inválidos se rechazan sin escribir historial (FR-007, FR-008, FR-022, FR-023)
 - [ ] T050 [P] [US4] Test en rojo de no-cambio en `tests/integration/us4-sin-cambio.test.ts`: fijar el mismo precio o el mismo stock que ya tenía devuelve `huboCambio: false` y **no** escribe entrada de historial (FR-027b)
+- [ ] T051b [P] [US4] Test en rojo de restricciones de archivado en `tests/integration/us4-archivado.test.ts`: sobre un libro **archivado**, modificar stock o precio se impide con mensaje sin escribir historial; modificar **título y editorial sí se permite** (FR-038, AC-34)
 - [ ] T051 [P] [US4] Test en rojo de datos descriptivos en `tests/integration/us4-datos.test.ts`: editar título y editorial persiste y vuelve al libro encontrable por los valores nuevos, **sin** escribir historial; título o editorial vacíos se rechazan; y colisión de título normalizado contra cualquier libro (activo o archivado) se rechaza (FR-032, FR-033)
 
 ### Implementation for User Story 4
 
-- [ ] T052 [P] [US4] Implementar `cambiarPrecio` y `cambiarStock` en `src/services/operacion.ts`, con el corte por no-cambio antes de abrir la transacción
+- [ ] T052 [P] [US4] Implementar `cambiarPrecio` y `cambiarStock` en `src/services/operacion.ts`, rechazando libros archivados (FR-038) y con el corte por no-cambio antes de abrir la transacción
 - [ ] T053 [P] [US4] Implementar `editarDatosLibro` en `src/services/catalogo.ts`, recalculando `titulo_normalizado`
 - [ ] T054 [US4] Server Actions de edición en `src/app/actions/catalogo.ts` (depende de T052, T053)
 - [ ] T055 [US4] Pantalla de edición en `src/app/libros/[id]/editar/page.tsx`
 
-> **Supuesto a confirmar (CHK024)**: se implementa que un libro **archivado no** recibe edición manual de precio ni de stock, para que no haya puerta lateral a la regla de que los archivados no se modifican.
+> **Resuelto (CHK024)**: un libro **archivado no** recibe edición manual de precio ni de stock, pero **sí** de título y editorial. RF-29 / FR-038, con AC-34.
 
 **Checkpoint**: el mantenimiento correctivo funciona.
 
@@ -187,11 +190,13 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 - [ ] T056 [P] [US5] Test en rojo de casi-coincidencia en `tests/unit/casi-coincidencia.test.ts`, con el **set de ejemplos de AC-10** como tabla de casos: variantes de edición del léxico dan positivo, títulos legítimamente distintos dan negativo (ver [research.md § R4](./research.md))
 - [ ] T057 [P] [US5] Crear fixtures `.xlsx` de actualización de precios, uno por categoría, en `tests/fixtures/excel/`
+- [ ] T057b [P] [US5] Test en rojo de columnas en `tests/integration/us5-columnas.test.ts`: con las columnas *libro* y *precio* se acepta y se lee; si falta alguna, **rechazo total** con mensaje y **ningún precio modificado** (FR-012, RF-06, AC-07 del PRD)
 - [ ] T058 [P] [US5] Test en rojo de aplicación en `tests/integration/us5-aplicacion.test.ts`: los activos coincidentes actualizan precio y escriben historial con origen `"actualización masiva por Excel"`; los archivados **no se modifican** (FR-013)
-- [ ] T059 [P] [US5] Test en rojo de reporte en `tests/integration/us5-reporte.test.ts`: `sin_cambio`, `sin_coincidencia`, `coincide_archivado` en apartado propio, `casi_coincidencia` sin aplicar, `duplicada_en_archivo`, y el invariante de completitud (FR-014, FR-015, FR-021, FR-030)
+- [ ] T059 [P] [US5] Test en rojo de reporte en `tests/integration/us5-reporte.test.ts`: `sin_cambio`, `sin_coincidencia`, `coincide_archivado` en apartado propio, `casi_coincidencia` sin aplicar, `duplicada_en_archivo`, y el invariante de completitud (FR-014, FR-015, FR-021, FR-030). Incluir la aserción explícita de que **el conteo total de libros no cambia** tras procesar el archivo: este flujo nunca crea libros (FR-020, PRD §7)
 - [ ] T059b [P] [US5] Test en rojo de casi-coincidencia de archivado en `tests/integration/us5-casi-archivado.test.ts`: una fila que es casi-coincidencia de un libro **archivado** no modifica nada y cae en `coincide_archivado`, **no** en `casi_coincidencia` ni en `sin_coincidencia` (FR-014, FR-015, FR-021b)
 - [ ] T060 [P] [US5] Test en rojo de idempotencia en `tests/integration/us5-idempotencia.test.ts`: reprocesar el mismo archivo deja el historial de precio **exactamente igual** que después de la primera pasada (FR-027b)
 - [ ] T061 [P] [US5] Test en rojo de reporte persistido en `tests/integration/us5-reporte-persistido.test.ts`: el reporte queda guardado con fecha, totales y detalle; se puede volver a consultar con el mismo contenido; no existe operación de edición ni de borrado (FR-036)
+- [ ] T061b [P] [US5] Test en rojo de volumen en `tests/integration/us5-volumen.test.ts`: archivo de 5.000 filas procesado sin fallar ni truncar, **incluida la persistencia de una fila de reporte por cada fila no aplicada** — es el flujo que más escribe a escala (FR-030b, RNF-03)
 
 ### Implementation for User Story 5
 
@@ -367,13 +372,14 @@ Ninguno impide arrancar; cada uno impide **cerrar** su historia:
 |---|---|---|
 | ~~CHK007 / CHK008 — precedencia de categorías de fila~~ | ~~T039~~ | **Resuelto** por RF-28 / FR-021b |
 | ~~CHK009 — casi-coincidencia contra sin coincidencia~~ | ~~T059~~ | **Resuelto**: categorías mutuamente excluyentes |
-| CHK010 — casi-coincidencia en alta masiva | — | US2 (hueco conocido) |
-| CHK024 — edición manual sobre archivados | T052 | US4 (supuesto) |
-| CHK025 — venta sólo de activos | T046 | US3 (supuesto) |
+| ~~CHK010 — casi-coincidencia en alta masiva~~ | ~~T040~~ | **Resuelto**: RF-19 / FR-017 — es un libro nuevo |
+| ~~CHK024 — edición manual sobre archivados~~ | ~~T052~~ | **Resuelto**: RF-29 / FR-038 |
+| ~~CHK025 — venta sólo de activos~~ | ~~T046~~ | **Resuelto**: RF-29 / FR-038 |
 
-Con la precedencia definida, **T039 está desbloqueada** y los dos flujos de Excel se pueden cerrar
-por completo. Los tres que quedan son supuestos documentados o un hueco de calidad conocido:
-ninguno impide implementar ni testear.
+**Ya no quedan bloqueos de producto.** Los cinco ítems que estaban abiertos se resolvieron con
+enmiendas del PRD (RF-19, RF-22, RF-28, RF-29 y AC-30 a AC-35), así que las ocho historias se pueden
+implementar y cerrar sin supuestos pendientes. El único ítem de diseño que sigue abierto es la regla
+completa de reconocimiento de encabezados (CHK012), que afecta a T038 pero no bloquea sus tests.
 
 ---
 
