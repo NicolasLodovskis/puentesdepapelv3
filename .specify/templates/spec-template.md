@@ -87,6 +87,16 @@
 
 ### Functional Requirements
 
+<!--
+  CONSTITUTION CONSTRAINTS (.specify/memory/constitution.md v1.0.0):
+  - Principle V: every FR here MUST trace to a RF of the current PRD. If a needed
+    capability is not in the PRD, amend the PRD first - do not spec it here.
+  - Principle II: no FR may specify defaulted, guessed or auto-resolved data. Missing or
+    ambiguous input is reported to the user, never filled in by the system.
+  - Principle III: any FR that changes stock or price MUST also require its history entry
+    (date, previous value, resulting value, origin).
+-->
+
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
 - **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
 - **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]

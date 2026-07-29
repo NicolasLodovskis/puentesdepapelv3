@@ -1,5 +1,10 @@
 # AGENTS.md — Manejo de Stock "Puentes de Papel"
 
+> **Constitución del proyecto**: `.specify/memory/constitution.md` (v1.0.0). Tiene
+> precedencia sobre este archivo. Principios no negociables: test-first (rojo-verde-refactor),
+> el sistema nunca inventa datos, trazabilidad total de stock y precio desde el alta, cero
+> secretos en el código, y nada fuera del PRD vigente.
+
 ## Propósito
 Software de gestión de stock y precios para una librería (un solo usuario).
 ABM de libros, manejo de stock, alta masiva y actualización de precios individual y masiva por Excel, y búsqueda por nombre/editorial o por foto.
@@ -38,3 +43,9 @@ npm test
 - No construir una tienda virtual ni opción de compra para clientes: está explícitamente fuera de alcance.
 - No reemplazar SQLite por otra base ni por un motor con servidor: la persistencia es un único archivo local (RNF-03).
 - No agregar login, roles ni soporte multiusuario: el sistema es de un único usuario y un único acceso.
+- No escribir implementación antes de su test en rojo (Constitución, Principio I).
+- No completar, adivinar ni estimar datos ausentes o ambiguos: se reportan (Principio II).
+- No escribir stock ni precio sin su entrada de historial en la misma transacción; no borrar
+  ni editar entradas de historial; no borrar libros físicamente (Principio III).
+- No commitear secretos, archivos `*.db` ni Excel reales del negocio (Principio IV).
+- No agregar features que no estén en el PRD vigente: primero se enmienda el PRD (Principio V).

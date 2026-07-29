@@ -40,7 +40,27 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Derived from `.specify/memory/constitution.md` v1.0.0. Mark each gate PASS / FAIL / N/A with
+a one-line justification.
+
+- [ ] **I. Test-First (NO NEGOCIABLE)**: every implementation task in this plan is preceded
+      by a failing test derived from a PRD Acceptance Criterion. Vitest is the runner.
+- [ ] **II. Nunca inventa datos**: no default values, no auto-resolved ambiguous matches, no
+      single-answer photo search. Missing/invalid input is reported, never filled in.
+- [ ] **III. Trazabilidad Total (NO NEGOCIABLE)**: every write that changes stock or price
+      also writes its history entry (date, previous value, resulting value, origin) in the
+      SAME transaction. Deletes are logical only; history is append-only.
+- [ ] **IV. Cero secretos**: no credentials, tokens or absolute machine paths in source.
+      `*.db` and real business Excel files stay out of version control.
+- [ ] **V. Alcance anclado al PRD**: every requirement in this plan maps to a RF of the
+      current PRD. Nothing out-of-scope (storefront, invoicing, auth/multiuser, physical
+      delete, book creation from the price-update Excel flow).
+- [ ] **Restricciones técnicas**: Next.js App Router + TypeScript + React, SQLite via
+      `better-sqlite3` (single local `.db`), the two Excel flows kept separate, one shared
+      title-normalization function, perf budgets (<1 s p95 search, <3 s p95 photo).
+
+Violations of Principles I, II, III and V MUST be fixed, not justified in Complexity
+Tracking.
 
 ## Project Structure
 
