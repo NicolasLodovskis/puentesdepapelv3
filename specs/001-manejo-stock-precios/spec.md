@@ -196,21 +196,24 @@ cambiaron, qué historiales se escribieron y qué muestra el reporte en cada cat
 4. **Dado** un Excel de precios procesado, **cuando** hay filas sin ninguna coincidencia,
    **entonces** no modifican ningún dato y se listan en el reporte como tales, con cantidad
    y detalle.
-5. **Dado** un Excel de precios procesado, **cuando** una fila no coincide exactamente pero,
+5. **Dado** un libro archivado, **cuando** una fila es casi-coincidencia de ese libro,
+   **entonces** no se modifica nada y la fila va al apartado de archivados, no a
+   casi-coincidencias ni a sin coincidencia.
+6. **Dado** un Excel de precios procesado, **cuando** una fila no coincide exactamente pero,
    tras la normalización, comparte el núcleo del título con un libro activo difiriendo sólo
    en variantes de edición entre paréntesis (p. ej. "tapa blanda" / "rústica" /
    "versión rústica"), **entonces** esa fila se muestra destacada en otro color como
    casi-coincidencia y su precio **no** se actualiza automáticamente.
-6. **Dado** un Excel de precios con dos o más filas cuyos títulos normalizan al mismo valor,
+7. **Dado** un Excel de precios con dos o más filas cuyos títulos normalizan al mismo valor,
    **cuando** se procesa, **entonces** sólo la primera ocurrencia se aplica y cada duplicada
    posterior se lista en el reporte con el motivo "duplicada dentro del archivo".
-7. **Dado** un libro activo con precio P, **cuando** se procesa una fila que coincide con él y
+8. **Dado** un libro activo con precio P, **cuando** se procesa una fila que coincide con él y
    trae el mismo precio P, **entonces** el libro no se modifica, no se agrega entrada al
    historial de precio y la fila se informa como coincidente sin cambio.
-8. **Dado** un Excel de precios ya procesado, **cuando** se lo procesa de nuevo sin cambios,
+9. **Dado** un Excel de precios ya procesado, **cuando** se lo procesa de nuevo sin cambios,
    **entonces** el historial de precio queda exactamente igual que después del primer
    procesamiento.
-9. **Dado** un Excel de precios procesado, **cuando** termina el procesamiento, **entonces** su
+10. **Dado** un Excel de precios procesado, **cuando** termina el procesamiento, **entonces** su
    reporte queda guardado con fecha, totales por categoría y el detalle de cada fila no aplicada
    con su motivo; y la librera puede volver a abrirlo más tarde con el mismo contenido, sin
    poder editarlo ni borrarlo.
@@ -336,6 +339,14 @@ candidatos de la lista.
   paréntesis) → se marca como casi-coincidencia para revisión manual; no se actualiza.
 - **Dos filas del mismo archivo que normalizan al mismo título** → se procesa la primera, el
   resto se reporta como "duplicada dentro del archivo".
+- **La primera ocurrencia de un título repetido es inválida y una posterior es válida** →
+  ninguna de las dos se aplica: la primera se reporta como inválida y la posterior como
+  duplicada dentro del archivo. La corrección es arreglar la primera y volver a subir el archivo,
+  que es seguro en los dos flujos.
+- **Fila que califica para varias categorías** → recibe una sola, la primera del orden de
+  precedencia de FR-021b. Una coincidencia exacta siempre gana sobre una casi-coincidencia.
+- **Casi-coincidencia de un libro archivado** → va al apartado de archivados, no a
+  casi-coincidencias ni a sin coincidencia.
 - **Fila de alta masiva que coincide con un libro activo** → se omite como duplicada; el
   libro activo no se modifica.
 - **Fila de alta masiva que coincide con un libro archivado** → reactiva el libro con los
@@ -413,11 +424,12 @@ a todos los flujos.
   coincidente **sin cambio** y no genera escritura ni historial (FR-027b). *(RF-07)*
 - **FR-014**: El sistema MUST reportar, sin modificar datos, las filas sin coincidencia y —
   en un apartado separado rotulado "coincide con un libro archivado — no actualizado" — las
-  filas que coincidan con un libro archivado, indicando cantidad y detalle en ambos casos.
-  *(RF-08)*
+  filas que coincidan con un libro archivado **o que sean casi-coincidencia de un libro
+  archivado**, indicando cantidad y detalle en ambos casos. *(RF-08)*
 - **FR-015**: El sistema MUST destacar visualmente, en otro color y sin actualizarlas, las
-  filas que sean casi-coincidencias de un libro activo (mismo núcleo de título difiriendo
-  sólo en variantes de edición entre paréntesis), para revisión manual. *(RF-09)*
+  filas que sean casi-coincidencias de un libro **activo** (mismo núcleo de título difiriendo
+  sólo en variantes de edición entre paréntesis), para revisión manual. La casi-coincidencia de
+  un libro **archivado** no se destaca: va al apartado de archivados (FR-014, FR-021b). *(RF-09)*
 
 **Excel — alta masiva**
 
@@ -441,7 +453,20 @@ a todos los flujos.
 
 - **FR-021**: Cuando dos o más filas de un mismo archivo tengan títulos que normalicen al
   mismo valor, el sistema MUST procesar únicamente la primera ocurrencia y MUST reportar las
-  restantes como omitidas por "duplicada dentro del archivo". *(RF-22)*
+  restantes como omitidas por "duplicada dentro del archivo". La condición es **posicional**:
+  toda ocurrencia posterior se reporta como duplicada aunque la primera no se haya aplicado —
+  si la primera es inválida, la posterior tampoco se aplica. Cuentan como ocurrencia todas las
+  filas con título legible, aun si son inválidas en otro campo. *(RF-22)*
+- **FR-021b**: El sistema MUST asignar a cada fila **una sola** categoría, evaluando en este
+  orden y quedándose con la primera que dé positivo. Común a los dos flujos: **(1)** `invalida`;
+  **(2)** `duplicada_en_archivo`. En **alta masiva**: **(3)** coincidencia exacta con un activo →
+  `duplicada_de_activo`; **(4)** coincidencia exacta con un archivado → reactivar (`aplicada`);
+  **(5)** sin coincidencia → crear (`aplicada`). En **actualización de precios**: **(3)**
+  coincidencia exacta con un activo → `aplicada`, o `sin_cambio` si el precio iguala al vigente;
+  **(4)** coincidencia exacta con un archivado → `coincide_archivado`; **(5)** casi-coincidencia
+  de un activo → `casi_coincidencia`; **(6)** casi-coincidencia de un archivado →
+  `coincide_archivado`; **(7)** nada de lo anterior → `sin_coincidencia`. Las categorías son
+  mutuamente excluyentes. *(RF-28)*
 
 **Trazabilidad**
 

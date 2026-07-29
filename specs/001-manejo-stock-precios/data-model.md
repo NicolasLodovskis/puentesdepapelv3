@@ -160,10 +160,37 @@ Enumeración compartida por los dos flujos de Excel, y el vocabulario de `report
 | `duplicada_de_activo` | alta masiva | Coincide con un libro activo existente (FR-019) |
 | `invalida` | ambos | Falta un campo, o stock/precio fuera de rango (FR-019) |
 
-> **Abierto (CHK007/CHK008)**: la spec no define la **precedencia** cuando una fila cae en varias
-> categorías a la vez, ni qué pasa con la segunda ocurrencia si la primera es inválida. El
-> vocabulario y el parseo se pueden construir ya; la función de clasificación final necesita esa
-> regla. Ver "Pendientes" en `research.md`.
+### Orden de precedencia (RF-28, FR-021b)
+
+Cada fila recibe **una sola** categoría. Se evalúa en este orden y gana la primera que da
+positivo:
+
+| # | Común a los dos flujos |
+|---|---|
+| 1 | `invalida` — falta un campo, o stock/precio fuera de rango |
+| 2 | `duplicada_en_archivo` — **posicional**: toda ocurrencia posterior a la primera, sin importar si la primera se aplicó |
+
+| # | Alta masiva | # | Actualización de precios |
+|---|---|---|---|
+| 3 | exacta con activo → `duplicada_de_activo` | 3 | exacta con activo → `aplicada`, o `sin_cambio` si el precio iguala |
+| 4 | exacta con archivado → reactivar (`aplicada`) | 4 | exacta con archivado → `coincide_archivado` |
+| 5 | sin coincidencia → crear (`aplicada`) | 5 | casi-coincidencia de activo → `casi_coincidencia` |
+| | | 6 | casi-coincidencia de archivado → `coincide_archivado` |
+| | | 7 | nada de lo anterior → `sin_coincidencia` |
+
+**Dos consecuencias que hay que testear explícitamente**:
+
+- **La coincidencia exacta gana sobre la casi-coincidencia.** Una fila `"El Principito"` puede
+  coincidir exacto con un libro y a la vez ser casi-coincidencia de `"El Principito (tapa
+  blanda)"`; se resuelve por la exacta. Es posible porque `esCasiCoincidencia` compara por
+  superconjunto de palabras.
+- **Validar antes de deduplicar, pero contar la ocurrencia igual.** Una fila sin título no tiene
+  clave y no puede deduplicarse, de ahí que la validación vaya primero. Pero una fila con título
+  legible **ocupa el lugar de primera ocurrencia aunque sea inválida en otro campo**: por eso, si
+  la primera es inválida, la posterior sale `duplicada_en_archivo` y ninguna se aplica.
+
+La clasificación es **determinista y no depende del resultado del procesamiento**: el mismo
+archivo contra el mismo catálogo produce siempre las mismas categorías.
 
 ---
 
