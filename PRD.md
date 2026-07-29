@@ -9,6 +9,7 @@
 | **Tipo** | Software de gestión de stock y precios para tienda de libros |
 | **Usuarios** | Un único usuario / un único acceso |
 | **Estado** | Borrador (endurecido) |
+| **Última enmienda** | 2026-07-29 — RF-13/RF-14: se agrega el origen *"alta manual"*. Nuevos RF-23/RF-24 (edición de título y editorial) y AC-22/AC-23/AC-24. |
 
 ---
 
@@ -53,16 +54,21 @@ No hay otros roles ni otros usuarios: es un sistema mono-usuario, de escritorio/
 | **RF-10** | El sistema debe permitir buscar libros por nombre o por editorial, devolviendo los libros coincidentes con su precio. |
 | **RF-11** | El sistema debe permitir consultar un libro por foto, devolviendo una **lista de candidatos** ordenada por similitud para que el usuario elija. |
 | **RF-12** | El sistema debe guardar un historial de las ventas (fecha y precio de venta). |
-| **RF-13** | El sistema debe guardar un historial de los cambios de stock (fecha, **cantidad anterior**, cantidad resultante y **origen** del cambio: venta, edición manual o alta por Excel). |
-| **RF-14** | El sistema debe guardar un historial de los cambios de precio (fecha, **precio anterior**, nuevo precio y **origen** del cambio: edición manual, actualización masiva por Excel o alta por Excel). |
+| **RF-13** | El sistema debe guardar un historial de los cambios de stock (fecha, **cantidad anterior**, cantidad resultante y **origen** del cambio: venta, edición manual, alta manual, **reactivación** o alta por Excel). Una operación que deja la cantidad igual a la vigente **no** constituye un cambio: no modifica el libro ni genera entrada de historial. **Excepción**: una reactivación (RF-20, RF-26) siempre registra su entrada, incluso si la cantidad no cambia, porque es un evento de ciclo de vida que debe quedar trazado. |
+| **RF-14** | El sistema debe guardar un historial de los cambios de precio (fecha, **precio anterior**, nuevo precio y **origen** del cambio: edición manual, alta manual, **reactivación**, actualización masiva por Excel o alta por Excel). Una operación que deja el precio igual al vigente **no** constituye un cambio: no modifica el libro ni genera entrada de historial. **Excepción**: una reactivación (RF-20, RF-26) siempre registra su entrada, incluso si el precio no cambia, porque es un evento de ciclo de vida que debe quedar trazado. |
 | **RF-15** | El sistema debe permitir revisar los historiales de precio, ventas **y stock**. |
 | **RF-16** | El sistema debe permitir filtrar los historiales por fecha, título y editorial. |
-| **RF-17** | El sistema debe impedir dar de alta un libro cuyo título, una vez normalizado (RF-07), coincida con el de otro libro **activo**. |
+| **RF-17** | El sistema debe impedir dar de alta un libro cuyo título, una vez normalizado (RF-07), coincida con el de **cualquier otro libro existente, activo o archivado**: el título normalizado es único en todo el catálogo. La editorial **no** forma parte de la clave (ver Restricción en la sección 8). Cuando el coincidente está archivado, el sistema debe informarlo y ofrecer reactivarlo en lugar de crear un duplicado. |
 | **RF-18** | El sistema debe permitir subir un archivo Excel de **alta masiva** con las columnas *libro*, *editorial*, *stock* y *precio*, mediante un flujo separado del de actualización de precios (RF-06). |
 | **RF-19** | El sistema debe crear un libro por cada fila **válida** del Excel de alta masiva cuyo título, tras normalizarlo (RF-07), **no** coincida con ningún libro existente (ni activo ni archivado). |
 | **RF-20** | El sistema debe **reactivar** (marcar como activo) el libro **archivado** cuyo título normalizado (RF-07) coincida con una fila válida del Excel de alta masiva, actualizando su stock y su precio con los valores de la fila. |
 | **RF-21** | El sistema debe reportar, **sin crear ni modificar libros**, las filas del Excel de alta masiva que se omiten —duplicadas (coinciden con un libro **activo**, RF-17) o inválidas (falta *libro*, *editorial*, *stock* o *precio*; o *stock* no es un entero ≥ 0; o *precio* no es un número > 0)— indicando la cantidad y el motivo de cada una. |
 | **RF-22** | En cualquiera de los dos flujos de Excel (actualización de precios y alta masiva), cuando dos o más filas tienen títulos que normalizan (RF-07) al mismo valor, el sistema debe procesar únicamente la primera ocurrencia y reportar las restantes como omitidas por *"duplicada dentro del archivo"*. |
+| **RF-23** | El sistema debe permitir modificar el **título** y la **editorial** de un libro existente, para corregir errores de carga. Ambos deben quedar no vacíos. |
+| **RF-24** | El sistema debe impedir modificar el título de un libro cuando el nuevo título, tras normalizarlo (RF-07), coincide con el de **cualquier otro libro existente, activo o archivado** (misma regla de unicidad global que RF-17, aplicada a la edición). |
+| **RF-25** | El sistema debe permitir consultar los libros **archivados**, de modo que el usuario pueda encontrar uno para reactivarlo. |
+| **RF-26** | El sistema debe permitir **reactivar** manualmente un libro archivado, fijando su stock y su precio en el momento de la reactivación, y registrando ambas entradas de historial con origen **"reactivación"** (distinto de "edición manual", para que el historial permita reconstruir que hubo una reactivación). La reactivación también debe poder iniciarse desde el rechazo de un alta duplicada contra un libro archivado (RF-17). |
+| **RF-27** | El sistema debe **persistir el reporte** de cada procesamiento de un Excel de **actualización de precios** (RF-06), con su fecha, los totales por categoría y el detalle de las filas no aplicadas con su motivo, y debe permitir consultar los reportes anteriores. Los reportes no se editan ni se borran. |
 
 ---
 
@@ -70,8 +76,11 @@ No hay otros roles ni otros usuarios: es un sistema mono-usuario, de escritorio/
 
 | ID | Requerimiento |
 |---|---|
-| **RNF-01** | La consulta de precio por búsqueda por nombre o editorial debe responder en **< 1 s (p95)**. |
-| **RNF-02** | La consulta de precio por búsqueda por foto debe responder en **< 3 s (p95)**. |
+| **RNF-01** | La consulta de precio por búsqueda por nombre o editorial debe responder en **< 1 s (p95)**, medida sobre el catálogo de referencia (~2.000 libros). |
+| **RNF-02** | La consulta de precio por búsqueda por foto debe responder en **< 3 s (p95)**, medida sobre el catálogo de referencia (~2.000 libros). |
+| **RNF-03** | El sistema debe procesar un archivo Excel de hasta **5.000 filas** en cualquiera de los dos flujos (actualización de precios y alta masiva) sin fallar ni truncar filas. |
+
+> **Volumen de referencia**: catálogo de aproximadamente **2.000 libros** y archivos Excel de hasta **5.000 filas**. Es la escala contra la que se verifican RNF-01, RNF-02 y RNF-03.
 
 > La persistencia en SQLite (un único archivo, sin servidor) se documenta como **Restricción** en la sección 8, no como RNF, por ser una decisión de arquitectura sin métrica asociada.
 
@@ -97,13 +106,21 @@ Formato: **Dado** (precondición) → **Cuando** (acción) → **Entonces** (res
 | **AC-12** | RF-11 | Dado un libro activo con foto, cuando el usuario busca a partir de una foto de ese libro, entonces el sistema devuelve una lista de candidatos ordenada por similitud en la que el libro correcto aparece entre los primeros 5, en < 3 s (p95). |
 | **AC-13** | RF-12, RF-13, RF-14, RF-15 | Dado un historial con registros (ventas, stock o precio), cuando el usuario lo abre, entonces el sistema muestra cada registro con su fecha y sus valores: en ventas, el precio de venta; en precio, el precio anterior, el nuevo precio y el origen; en stock, la cantidad anterior, la cantidad resultante y el origen. |
 | **AC-14** | RF-16 | Dado un historial con registros, cuando el usuario aplica un filtro por fecha y/o título y/o editorial, entonces el sistema muestra únicamente los registros que cumplen el filtro. |
-| **AC-15** | RF-17 | Dado un libro activo cuyo título normalizado es T, cuando el usuario intenta dar de alta otro libro cuyo título también normaliza a T, entonces el sistema lo impide y no crea el segundo libro. |
+| **AC-15** | RF-17 | Dado un libro existente cuyo título normalizado es T —esté **activo o archivado**—, cuando el usuario intenta dar de alta otro libro cuyo título también normaliza a T, entonces el sistema lo impide y no crea el segundo libro; y cuando el coincidente está archivado, el mensaje lo indica y ofrece reactivarlo. |
 | **AC-16** | RF-18 | Dado un archivo Excel de alta masiva, cuando se sube: si contiene las columnas *libro*, *editorial*, *stock* y *precio* el sistema lo acepta y lee su contenido; si le falta alguna de esas columnas, el sistema lo rechaza con un mensaje. Este flujo es independiente del de actualización de precios (RF-06). |
 | **AC-17** | RF-19 | Dado un Excel de alta masiva aceptado, cuando se procesa, entonces por cada fila válida cuyo título normalizado (RF-07) no coincide con ningún libro existente (ni activo ni archivado) se crea un libro con su título, editorial, stock y precio, quedando persistido y recuperable en una consulta posterior. |
 | **AC-18** | RF-21 | Dado un Excel de alta masiva procesado, cuando hay filas duplicadas (título normalizado coincide con un libro **activo**, RF-17) o inválidas (falta *libro*, *editorial*, *stock* o *precio*; o *stock* no es un entero ≥ 0; o *precio* no es un número > 0), entonces esas filas no crean ni modifican ningún libro y se listan en un reporte con su cantidad y el motivo de cada omisión. |
 | **AC-19** | RF-19, RF-13, RF-14 | Dada una fila válida del Excel de alta masiva que crea un libro nuevo con stock S y precio P, cuando se crea el libro, entonces se agrega una entrada en el historial de stock (fecha, cantidad anterior 0, cantidad resultante S, origen "alta por Excel") **y** una entrada en el historial de precio (fecha, precio anterior 0, nuevo precio P, origen "alta por Excel"). |
-| **AC-20** | RF-20, RF-13, RF-14 | Dado un libro **archivado** con stock S y precio P cuyo título normalizado (RF-07) coincide con una fila válida del Excel de alta masiva que trae stock S' y precio P', cuando se procesa el Excel, entonces el libro queda marcado como activo, su stock pasa a S' y su precio a P', y se agregan una entrada en el historial de stock (fecha, cantidad anterior S, cantidad resultante S', origen "alta por Excel") **y** una entrada en el historial de precio (fecha, precio anterior P, nuevo precio P', origen "alta por Excel"). |
+| **AC-20** | RF-20, RF-13, RF-14 | Dado un libro **archivado** con stock S y precio P cuyo título normalizado (RF-07) coincide con una fila válida del Excel de alta masiva que trae stock S' y precio P', cuando se procesa el Excel, entonces el libro queda marcado como activo, su stock pasa a S' y su precio a P', y se agregan una entrada en el historial de stock (fecha, cantidad anterior S, cantidad resultante S', origen "alta por Excel") **y** una entrada en el historial de precio (fecha, precio anterior P, nuevo precio P', origen "alta por Excel"); y ambas entradas se agregan **también cuando S' = S y/o P' = P**, por ser una reactivación (RF-13, RF-14). |
 | **AC-21** | RF-22 | Dado un Excel (de actualización de precios o de alta masiva) con dos o más filas cuyos títulos normalizan (RF-07) al mismo valor, cuando se procesa, entonces solo la primera ocurrencia se procesa según su flujo y cada fila duplicada posterior no se procesa y se lista en el reporte con el motivo "duplicada dentro del archivo". |
+| **AC-22** | RF-01, RF-13, RF-14 | Dada un alta manual válida (RF-01) con stock S y precio P, cuando el usuario confirma el alta, entonces se agrega una entrada en el historial de stock (fecha, cantidad anterior 0, cantidad resultante S, origen "alta manual") **y** una entrada en el historial de precio (fecha, precio anterior 0, nuevo precio P, origen "alta manual"). |
+| **AC-23** | RF-23 | Dado un libro existente, cuando el usuario cambia su título y/o su editorial por valores no vacíos, entonces los nuevos valores quedan persistidos y el libro pasa a ser recuperable por ellos en la búsqueda (RF-10); y cuando el nuevo título o la nueva editorial quedan vacíos, el sistema lo rechaza con un mensaje y no modifica el libro. |
+| **AC-24** | RF-24 | Dado un libro existente cuyo título normalizado es T —esté **activo o archivado**—, cuando el usuario intenta cambiar el título de otro libro a un valor que también normaliza a T, entonces el sistema lo impide y no modifica el libro. |
+| **AC-25** | RF-25 | Dados uno o más libros archivados y uno o más activos, cuando el usuario abre la consulta de archivados, entonces el sistema lista únicamente los archivados. |
+| **AC-26** | RF-26, RF-13, RF-14 | Dado un libro archivado con stock S y precio P, cuando el usuario lo reactiva fijando stock S' y precio P', entonces el libro queda marcado como activo, vuelve a aparecer en las búsquedas (RF-10), su stock pasa a S' y su precio a P', y se agregan una entrada en el historial de stock (fecha, cantidad anterior S, cantidad resultante S', origen "reactivación") **y** una entrada en el historial de precio (fecha, precio anterior P, nuevo precio P', origen "reactivación"); y ambas entradas se agregan **también cuando S' = S y/o P' = P**. |
+| **AC-27** | RF-13, RF-14, RF-07, RF-08 | Dado un libro activo con precio P, cuando se procesa una fila de Excel de actualización de precios que coincide con él y trae el mismo precio P, entonces el libro no se modifica, no se agrega ninguna entrada al historial de precio, y la fila se informa como coincidente **sin cambio**; y, en consecuencia, procesar dos veces el mismo Excel deja exactamente las mismas entradas de historial que procesarlo una vez. |
+| **AC-28** | RF-27 | Dado un Excel de actualización de precios procesado, cuando el procesamiento termina, entonces su reporte queda persistido con fecha, totales por categoría y el detalle de cada fila no aplicada con su motivo; y cuando el usuario abre la consulta de reportes anteriores, entonces ese reporte sigue disponible con el mismo contenido, sin opción de editarlo ni borrarlo. |
+| **AC-29** | RF-17 | Dado un libro cargado con título T y editorial E1, cuando el usuario intenta dar de alta otro libro con el mismo título T y editorial E2 ≠ E1, entonces el sistema lo impide y no crea el segundo libro (la editorial no forma parte de la clave — sección 8). |
 
 ---
 
@@ -119,6 +136,7 @@ El sistema es **mono-usuario con un único acceso local y sin autenticación** (
 - Módulo de facturación (emisión de facturas, comprobantes fiscales, integración con AFIP/organismos impositivos y gestión de datos fiscales de clientes).
 - Autenticación, login, roles o soporte multiusuario.
 - Borrado físico de libros (la baja es siempre lógica — RF-04).
+- Resguardo de datos: backup automático, exportación de la base y restauración desde una copia. El resguardo del archivo `.db` es responsabilidad de la usuaria, copiándolo por fuera del sistema. Es un **riesgo asumido**: una falla de disco o una corrupción del archivo implica perder el inventario y los historiales.
 - Creación de libros a partir del Excel de **actualización de precios** (RF-06): en ese flujo las filas sin coincidencia sólo se reportan (RF-07/RF-08). El alta de libros por Excel se hace únicamente por el flujo dedicado de **alta masiva** (RF-18/RF-19/RF-20/RF-21).
 
 ---
@@ -128,7 +146,8 @@ El sistema es **mono-usuario con un único acceso local y sin autenticación** (
 | Tipo | Descripción | Mitigación |
 |---|---|---|
 | **Restricción** | La persistencia se implementa con **SQLite**: base embebida en un único archivo `.db`, sin servidor. No se reemplaza por otro motor. | — |
+| **Restricción** | La identidad de un libro es su **título normalizado (RF-07), sin la editorial**. Por lo tanto **no pueden coexistir dos libros con el mismo título de editoriales distintas**: el segundo se rechaza en el alta (RF-17) y se omite como duplicado en el alta masiva (RF-21). Es una decisión explícita, no una omisión. | Si el negocio necesita stockear la misma obra de dos editoriales, se diferencia en el título al cargarlo (p. ej. "Hamlet (Cátedra)"), lo que además lo vuelve distinguible en la búsqueda y en el matcheo de los Excel. |
 | **Riesgo** | La búsqueda por foto puede devolver el libro incorrecto en la primera posición. | Se devuelve una lista de candidatos (RF-11) para que el usuario elija; puede descartar el resultado incorrecto y repetir. |
 | **Riesgo** | Filas del Excel que parecen coincidir pero corresponden a otra edición (variantes de tapa/versión) podrían actualizar el precio equivocado. | Se detectan como casi-coincidencias y se destacan para revisión manual, sin actualizar automáticamente (RF-09). |
-| **Dependencia** | Base de datos SQLite (archivo local). | Backup periódico del archivo `.db`. |
+| **Dependencia** | Base de datos SQLite (archivo local). | Backup periódico del archivo `.db`, **manual y a cargo de la usuaria**: el sistema no lo automatiza ni ofrece exportación (fuera de alcance, sección 7). |
 | **Dependencia** | Librería local de búsqueda por foto (aún sin definir). | Evaluar y fijar la librería antes de implementar RF-11. |

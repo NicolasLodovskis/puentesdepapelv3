@@ -41,7 +41,7 @@ npm test
 
 ## Qué NO hacer
 - No construir una tienda virtual ni opción de compra para clientes: está explícitamente fuera de alcance.
-- No reemplazar SQLite por otra base ni por un motor con servidor: la persistencia es un único archivo local (RNF-03).
+- No reemplazar SQLite por otra base ni por un motor con servidor: la persistencia es un único archivo local (PRD sección 8 — Restricciones).
 - No agregar login, roles ni soporte multiusuario: el sistema es de un único usuario y un único acceso.
 - No escribir implementación antes de su test en rojo (Constitución, Principio I).
 - No completar, adivinar ni estimar datos ausentes o ambiguos: se reportan (Principio II).
