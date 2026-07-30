@@ -39,11 +39,11 @@ requiere ninguna otra historia.
 
 **Acceptance Scenarios**:
 
-1. **Dado** un formulario con título y editorial no vacíos, stock entero ≥ 0 y precio > 0,
+1. **Dado** un formulario con título y editorial no vacíos, stock entero ≥ 0 y precio entero > 0,
    **cuando** la librera confirma el alta, **entonces** el libro queda persistido y es
    recuperable en una consulta posterior.
 2. **Dado** un formulario donde el título o la editorial están vacíos, el stock no es un
-   entero ≥ 0, o el precio no es > 0, **cuando** la librera confirma el alta, **entonces**
+   entero ≥ 0, o el precio no es un entero > 0, **cuando** la librera confirma el alta, **entonces**
    el sistema la rechaza con un mensaje que indica el campo inválido y no persiste el libro.
 3. **Dado** un libro existente cuyo título normalizado es T —esté activo o archivado—,
    **cuando** la librera intenta dar de alta otro libro cuyo título también normaliza a T,
@@ -98,7 +98,8 @@ reporte lista las demás con su motivo. Sólo necesita el modelo de libro de US1
    el historial de precio (fecha, precio anterior 0, nuevo precio P, origen "alta por Excel").
 5. **Dado** un Excel de alta masiva procesado, **cuando** hay filas duplicadas (título
    normalizado coincide con un libro activo) o inválidas (falta *libro*, *editorial*,
-   *stock* o *precio*; o *stock* no es entero ≥ 0; o *precio* no es número > 0),
+   *stock* o *precio*; o *stock* no es entero ≥ 0; o *precio* no es entero > 0 —incluido un
+   precio con decimales—),
    **entonces** esas filas no crean ni modifican ningún libro y se listan en un reporte con
    la cantidad y el motivo de cada omisión.
 6. **Dado** un Excel de alta masiva con dos o más filas cuyos títulos normalizan al mismo
@@ -157,7 +158,7 @@ historial correspondiente con el valor anterior y origen "edición manual".
    stock a S', **entonces** S' queda guardado **y** se agrega una entrada en el historial de
    stock con fecha, cantidad anterior (S), cantidad resultante (S') y origen
    "edición manual".
-3. **Dado** un intento de fijar un precio que no es > 0 o un stock que no es entero ≥ 0,
+3. **Dado** un intento de fijar un precio que no es un entero > 0 o un stock que no es entero ≥ 0,
    **cuando** la librera confirma, **entonces** el sistema lo rechaza con un mensaje, no
    cambia el dato y no escribe historial.
 4. **Dado** un libro existente, **cuando** la librera cambia su título y/o su editorial por
@@ -403,7 +404,7 @@ a todos los flujos.
   (opcional), cantidad en stock y precio. *(RF-01)*
 - **FR-002**: El sistema MUST rechazar el alta, con un mensaje que identifique el problema y
   sin persistir nada, cuando el título o la editorial estén vacíos, el stock no sea un entero
-  ≥ 0, o el precio no sea un número > 0. *(RF-01)*
+  ≥ 0, o el precio no sea un **entero** > 0. *(RF-01)*
 - **FR-003**: El sistema MUST comparar títulos mediante una única normalización compartida
   por todos los flujos: minúsculas, sin acentos, sin puntuación e ignorando el orden del
   artículo. *(RF-07)*
@@ -467,7 +468,7 @@ a todos los flujos.
   con los valores de la fila. *(RF-20)*
 - **FR-019**: El sistema MUST reportar, sin crear ni modificar libros, las filas omitidas del
   Excel de alta masiva —duplicadas (coinciden con un libro activo) o inválidas (falta *libro*,
-  *editorial*, *stock* o *precio*; o *stock* no es entero ≥ 0; o *precio* no es número > 0)—
+  *editorial*, *stock* o *precio*; o *stock* no es entero ≥ 0; o *precio* no es entero > 0)—
   indicando la cantidad y el motivo de cada una. *(RF-21)*
 - **FR-020**: El sistema MUST NOT crear libros a partir del Excel de **actualización de
   precios**: en ese flujo las filas sin coincidencia sólo se reportan. *(PRD §7)*
@@ -567,6 +568,15 @@ a todos los flujos.
   si una columna obligatoria aparece repetida, porque elegir una de las dos sería adivinar. Todo
   rechazo por encabezados MUST indicar qué columnas faltan o están repetidas **y listar los
   encabezados encontrados**. *(RF-30)*
+- **FR-040**: El sistema MUST interpretar el precio, en cualquier origen (formulario o Excel), con
+  estas reglas: **(a)** el valor válido es un **entero > 0** — no se manejan centavos; **(b)** MUST
+  aceptar un valor cuya parte decimal sea **cero** (`1234`, `1234,00`, `1234.0`), porque denota
+  exactamente ese entero; **(c)** MUST rechazar, **sin redondear**, todo valor con parte decimal
+  distinta de cero (`1234,50`), porque alterar un importe por cuenta propia corrompería un dato de
+  precio (FR-029); **(d)** MUST rechazar todo valor no numérico y todo valor con separador de miles
+  (`1.234,50`), porque decidir si el punto separa miles o decimales sería adivinar; **(e)** MUST
+  distinguir en el reporte el precio **ausente** del **no numérico**, porque son dos correcciones
+  distintas para quien arregla el archivo. *(RF-31)*
 
 ### Key Entities
 

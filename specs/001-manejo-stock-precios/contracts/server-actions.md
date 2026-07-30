@@ -34,8 +34,10 @@ type ErrorNegocio =
 la UI necesita ofrecer reactivarlo (FR-004, FR-035, US6 esc. 6). Sin esos dos campos, ese camino no
 se puede construir.
 
-**Los importes cruzan el límite en centavos** (`number` entero). La conversión a texto con coma
-decimal ocurre sólo en la UI (R5).
+**Los importes cruzan el límite como `number` entero de unidad de moneda** — sin centavos (R5, PRD
+RF-01). El campo se llama `precio` en todas las firmas. La conversión desde texto ocurre sólo en el
+borde de entrada (formulario y lectura de Excel) y rechaza los decimales en vez de redondearlos
+(FR-040).
 
 ---
 
@@ -47,14 +49,14 @@ function altaLibro(input: {
   titulo: string
   editorial: string
   stock: number
-  precioCentavos: number
+  precio: number
   foto?: Uint8Array
 }): Promise<Resultado<{ libroId: number }>>
 ```
 
 Escribe, en una sola transacción: el libro, su `movimiento_stock` inicial
 (`cantidad_anterior: 0`, origen `'alta manual'`) y su `movimiento_precio` inicial
-(`precio_anterior_centavos: 0`, mismo origen). Si hay `foto`, calcula y guarda el embedding.
+(`precio_anterior: 0`, mismo origen). Si hay `foto`, calcula y guarda el embedding.
 
 ```ts
 // FR-032, FR-033
@@ -73,7 +75,7 @@ libro.
 // FR-007, FR-022, FR-027, FR-027b
 function cambiarPrecio(input: {
   libroId: number
-  precioCentavos: number
+  precio: number
 }): Promise<Resultado<{ huboCambio: boolean }>>
 
 // FR-008, FR-023, FR-027, FR-027b
@@ -103,12 +105,12 @@ function archivarLibro(input: { libroId: number }): Promise<Resultado<void>>
 function reactivarLibro(input: {
   libroId: number
   stock: number
-  precioCentavos: number
+  precio: number
 }): Promise<Resultado<void>>
 ```
 
 `reactivarLibro` escribe **siempre** las dos entradas de historial con origen `'reactivación'`,
-incluso si `stock` y `precioCentavos` coinciden con los que el libro ya tenía.
+incluso si `stock` y `precio` coinciden con los que el libro ya tenía.
 
 ---
 
@@ -129,7 +131,7 @@ type LibroResumen = {
   titulo: string
   editorial: string
   stock: number
-  precioCentavos: number
+  precio: number
   tieneFoto: boolean
 }
 ```
@@ -238,7 +240,7 @@ function esCasiCoincidencia(normalizadoA: string, normalizadoB: string): boolean
 // FR-002 — compartido por alta manual, edición y las dos ingestas de Excel.
 function validarCamposLibro(input: {
   titulo: unknown; editorial: unknown; stock: unknown; precio: unknown
-}): Resultado<{ titulo: string; editorial: string; stock: number; precioCentavos: number }>
+}): Resultado<{ titulo: string; editorial: string; stock: number; precio: number }>
 ```
 
 `normalizarTitulo` es la restricción de la constitución sobre una única función de normalización

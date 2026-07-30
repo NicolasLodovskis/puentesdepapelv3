@@ -138,7 +138,7 @@ src/
 │   ├── normalizar-titulo.ts      # ÚNICA normalización (Constitución)
 │   ├── casi-coincidencia.ts      # léxico de variantes de edición
 │   ├── validar-libro.ts          # validación compartida por todos los flujos
-│   ├── precio.ts                 # conversión y redondeo a centavos
+│   ├── precio.ts                 # conversión a entero de moneda (rechaza decimales)
 │   ├── categorias-fila.ts        # vocabulario y precedencia de clasificación
 │   └── resultado.ts              # Resultado<T> y ErrorNegocio (contrato)
 ├── db/

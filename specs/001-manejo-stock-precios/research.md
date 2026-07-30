@@ -147,17 +147,34 @@ de actualización de precios**, que es donde FR-015 la exige. Ver "Pendientes" (
 
 ## R5 — Representación del precio (cierra CHK013)
 
-**Decision**: **entero de centavos** (`INTEGER` en SQLite), con dos decimales de precisión.
-Conversión a/desde string sólo en los bordes (UI y lectura de Excel), nunca aritmética en punto
-flotante sobre dinero.
+> **Enmendado el 2026-07-30** por decisión de la propietaria (PRD RF-01, RF-31): **los precios son
+> enteros y el sistema no maneja centavos**. La versión anterior de R5 guardaba centavos con dos
+> decimales de precisión; el razonamiento de fondo —entero en `INTEGER`, sin aritmética flotante
+> sobre dinero— no cambia, pero la unidad pasa a ser la unidad de moneda y **desaparece el
+> redondeo**, que era la parte más delicada.
 
-**Rationale**: `precio > 0` no acotaba precisión ni redondeo. Guardar centavos elimina de raíz el
-error de representación de `REAL` (0.1 + 0.2), hace exacta la comparación de FR-027b
-("precio igual al vigente ⇒ sin historial") y hace exacta la copia del precio vigente a la venta
-(FR-009). El redondeo se define una sola vez: la lectura de Excel redondea a centavo más cercano
-y rechaza lo que no sea numérico.
+**Decision**: **entero de unidad de moneda** (`INTEGER` en SQLite, `CHECK (precio > 0)`). No hay
+subunidad: `15000` es quince mil. La conversión desde texto ocurre sólo en los bordes (formulario y
+lectura de Excel) y **nunca hay aritmética en punto flotante sobre dinero**.
 
-**Alternatives considered**: `REAL` (rechazado: comparación por igualdad inexacta rompe FR-027b);
+**Regla de conversión en el borde** (FR-040): se acepta el entero (`1234`) y también el valor cuya
+parte decimal es **cero** (`1234,00`, `1234.0`), porque denota exactamente ese entero y es lo que
+Excel escribe en una celda numérica con formato. Se **rechaza sin redondear** todo valor con parte
+decimal distinta de cero (`1234,50`), todo valor con separador de miles (`1.234,50`) y todo valor no
+numérico; el reporte distingue el precio **ausente** del **no numérico**.
+
+**Rationale**: `precio > 0` no acotaba el dominio. Con enteros de moneda, la comparación por
+igualdad de FR-027b ("precio igual al vigente ⇒ sin historial") y la copia del precio vigente a la
+venta (FR-009) son exactas por construcción, igual que con centavos, pero además **no queda ninguna
+decisión de redondeo que tomar**: no existe el caso "el importe redondea a cero" ni el punto medio
+que obligaba a leer los dígitos como enteros para no perder un centavo por error de representación
+del `double`. Rechazar el decimal en lugar de redondearlo es lo que pide el Principio II: alterar un
+importe por cuenta propia corrompe un dato de precio, y reportar la fila es siempre preferible.
+
+**Alternatives considered**: **centavos** (la decisión anterior; rechazada por la propietaria: el
+negocio no usa subunidades y guardar ×100 hace que el dato almacenado no coincida con el que la
+librera ve); **redondear el decimal al entero más cercano** (rechazado: modifica un importe sin
+avisar, contra el Principio II); `REAL` (rechazado: comparación por igualdad inexacta rompe FR-027b);
 `TEXT` decimal con una librería de decimales (rechazado: complejidad innecesaria para importes de
 librería, y comparaciones más lentas).
 

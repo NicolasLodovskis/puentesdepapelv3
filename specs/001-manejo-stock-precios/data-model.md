@@ -6,7 +6,8 @@
 Motor: SQLite, archivo único, vía `better-sqlite3`. `PRAGMA journal_mode = WAL`,
 `PRAGMA foreign_keys = ON`.
 
-Convenciones que salen de la investigación: los importes son **enteros de centavos** (R5), las
+Convenciones que salen de la investigación: los importes son **enteros de unidad de moneda**, sin
+centavos (R5, PRD RF-01/RF-31), las
 marcas temporales son **`TEXT` ISO-8601 UTC con milisegundos** (R6), y los historiales son
 **append-only** (Principio III, FR-028).
 
@@ -28,7 +29,7 @@ La unidad del catálogo. Nunca se borra físicamente.
 | `foto` | `BLOB NULL` | Opcional (FR-001) |
 | `foto_embedding` | `BLOB NULL` | 512 floats del embedding CLIP (R1). Presente si y sólo si hay `foto` |
 | `stock` | `INTEGER NOT NULL` | `>= 0`, entero (FR-002) |
-| `precio_centavos` | `INTEGER NOT NULL` | `> 0` (FR-002) |
+| `precio` | `INTEGER NOT NULL` | `> 0` y entero, sin decimales (FR-002, FR-040) |
 | `estado` | `TEXT NOT NULL` | `'activo'` \| `'archivado'`. Default `'activo'` |
 | `creado_en` | `TEXT NOT NULL` | ISO-8601 UTC |
 
@@ -51,7 +52,7 @@ nivel de base, el invariante se sostiene incluso si un camino de código se olvi
 ```
 
 Un libro `archivado` sale de las consultas (FR-005, FR-006) pero conserva todo su historial
-(FR-011). Toda reactivación fija `stock` y `precio_centavos` y **siempre** escribe sus dos
+(FR-011). Toda reactivación fija `stock` y `precio` y **siempre** escribe sus dos
 entradas de historial, incluso con valores idénticos (FR-027b, excepción única).
 
 ---
@@ -65,8 +66,8 @@ Historial de precio. Append-only.
 | `id` | `INTEGER PK AUTOINCREMENT` | Desempata el orden ante igual `fecha` (R6) |
 | `libro_id` | `INTEGER NOT NULL` | `FK → libro(id)` |
 | `fecha` | `TEXT NOT NULL` | ISO-8601 UTC |
-| `precio_anterior_centavos` | `INTEGER NOT NULL` | `0` cuando el origen es un alta (FR-031) |
-| `precio_nuevo_centavos` | `INTEGER NOT NULL` | `> 0` |
+| `precio_anterior` | `INTEGER NOT NULL` | `0` cuando el origen es un alta (FR-031) |
+| `precio_nuevo` | `INTEGER NOT NULL` | `> 0` |
 | `origen` | `TEXT NOT NULL` | Ver enumeración abajo |
 
 **`origen` ∈** `'edición manual'` · `'alta manual'` · `'reactivación'` ·
@@ -106,7 +107,7 @@ Una unidad vendida. Append-only.
 | `id` | `INTEGER PK AUTOINCREMENT` | |
 | `libro_id` | `INTEGER NOT NULL` | `FK → libro(id)` |
 | `fecha` | `TEXT NOT NULL` | ISO-8601 UTC |
-| `precio_venta_centavos` | `INTEGER NOT NULL` | Copia del `precio_centavos` vigente al vender (FR-009) |
+| `precio_venta` | `INTEGER NOT NULL` | Copia del `precio` vigente al vender (FR-009) |
 
 El precio se **copia**, no se referencia: cambiar el precio del libro después no debe alterar una
 venta ya registrada.
@@ -229,7 +230,7 @@ implementación, para que no divergan:
 | Título | No vacío tras recortar |
 | Editorial | No vacía tras recortar |
 | Stock | Entero, `>= 0` |
-| Precio | Numérico, `> 0`, redondeado a centavos |
+| Precio | Entero `> 0`. Se acepta parte decimal cero (`1234,00`); toda otra parte decimal se rechaza sin redondear (FR-040) |
 | Unicidad | `titulo_normalizado` no existente en **ningún** libro (activo o archivado) |
 | Cambio real | Una escritura cuyo valor iguala el vigente no se aplica ni historiza — salvo reactivación (FR-027b) |
 
