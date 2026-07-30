@@ -44,7 +44,7 @@ describe('normalizarTitulo', () => {
       ['¿Quién mató a Palomino Molero?', 'quien mato a palomino molero'],
       ['¡Absalón, Absalón!', 'absalon absalon'],
       ['Fahrenheit 451: la novela', 'fahrenheit 451 la novela'],
-      ['Diccionario de la lengua; tomo II', 'diccionario de lengua tomo ii'],
+      ['Diccionario de la lengua; tomo II', 'diccionario de la lengua tomo ii'],
       ['2001. Odisea del espacio', '2001 odisea del espacio'],
     ];
 
@@ -210,6 +210,46 @@ describe('normalizarTitulo', () => {
      */
     it('"La Casa" y "Casa" colapsan a la misma clave (riesgo aceptado en R3)', () => {
       expect(normalizarTitulo('La Casa')).toBe(normalizarTitulo('Casa'));
+    });
+
+    /**
+     * R3 dice "si empieza con un artículo, se lo quita", en singular: se quita
+     * uno, no todos. Con dos artículos seguidos —"La La Land" es un título
+     * real— eso deja el segundo. Es deliberado: quitar los dos daría `land`,
+     * que pierde más información que `la land`. La contracara es que en este
+     * caso la función no es idempotente; no afecta a ningún flujo, porque
+     * siempre se normaliza el título crudo y nunca uno ya normalizado.
+     */
+    it('con dos artículos seguidos se quita sólo el primero', () => {
+      expect(normalizarTitulo('La La Land')).toBe('la land');
+      expect(normalizarTitulo('Los Los detectives')).toBe('los detectives');
+    });
+
+    /**
+     * Un título que es sólo un artículo conserva el artículo en vez de quedar
+     * vacío. `titulo_normalizado` es la clave UNIQUE del catálogo (data-model.md)
+     * y una clave vacía haría colisionar dos libros sin relación.
+     */
+    it('un título que es sólo un artículo no queda vacío', () => {
+      expect(normalizarTitulo('El')).toBe('el');
+      expect(normalizarTitulo('Las')).toBe('las');
+    });
+
+    /**
+     * El paso 4 usa las categorías Unicode de letra y número, no `[a-z0-9]`.
+     * Con el rango ASCII, `Fußball` quedaría como `fuball` —la ß no tiene
+     * descomposición NFD, así que el paso 1 no la convierte en `ss`— y un título
+     * en alfabeto no latino se vaciaría por completo.
+     */
+    it('conserva letras sin equivalente ASCII en vez de mutilar la palabra', () => {
+      expect(normalizarTitulo('Fußball in Deutschland')).toBe('fußball in deutschland');
+      expect(normalizarTitulo('Война y paz')).toBe('воина y paz');
+    });
+
+    it('el espacio duro separa palabras, no las pega', () => {
+      // U+00A0, el que llega al pegar un título desde una web o una celda de Excel.
+      expect(normalizarTitulo('El Principito')).toBe('principito');
+      expect(normalizarTitulo('Cien años de soledad')).toBe('cien anos de soledad');
     });
 
     it('el resultado sólo contiene minúsculas, dígitos y espacios simples', () => {
