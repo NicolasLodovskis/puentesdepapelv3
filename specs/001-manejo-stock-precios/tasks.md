@@ -29,7 +29,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 **Purpose**: inicializar el proyecto con el stack fijado en el plan.
 
-- [ ] T001 Inicializar proyecto Next.js con App Router, TypeScript y React en la raíz (`package.json`, `tsconfig.json`, `next.config.ts`)
+- [X] T001 Inicializar proyecto Next.js con App Router, TypeScript y React en la raíz (`package.json`, `tsconfig.json`, `next.config.ts`)
 - [ ] T002 [P] Configurar Vitest con entorno node y alias de rutas en `vitest.config.ts`
 - [ ] T003 [P] Crear `.gitignore` cubriendo `*.db`, `*.db-wal`, `*.db-shm`, `*.xlsx`, `*.xls` y `.env*` (Principio IV — cero secretos ni datos del negocio)
 - [ ] T004 [P] Configurar lint y formato en `eslint.config.mjs` y `.prettierrc`
