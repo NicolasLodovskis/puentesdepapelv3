@@ -34,7 +34,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 - [X] T003 [P] Crear `.gitignore` cubriendo `*.db`, `*.db-wal`, `*.db-shm`, `*.xlsx`, `*.xls` y `.env*` (Principio IV — cero secretos ni datos del negocio)
 - [X] T004 [P] Configurar lint y formato en `eslint.config.mjs` y `.prettierrc`
 - [X] T005 Instalar dependencias de runtime `better-sqlite3` y `exceljs` en `package.json` (ver [research.md § R2](./research.md))
-- [ ] T006 Agregar scripts `dev`, `build`, `start`, `test` y `test:watch` en `package.json`, coincidentes con los documentados en `AGENTS.md`
+- [X] T006 Agregar scripts `dev`, `build`, `start`, `test` y `test:watch` en `package.json`, coincidentes con los documentados en `AGENTS.md`
 
 ---
 
