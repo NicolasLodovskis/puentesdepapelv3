@@ -1,0 +1,18 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+package-lock.json
+next-env.d.ts
+*.db
+*.xlsx
+*.xls
+
+# Documentación y artefactos de especificación: los escribe una persona y
+# Prettier reacomodaría sus tablas y listas generando ruido sin beneficio.
+# Acá Prettier formatea código, no prosa.
+*.md
+.claude/
+.specify/
+specs/
