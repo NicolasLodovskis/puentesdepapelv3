@@ -46,7 +46,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Dominio puro — tests primero, sin base de datos
 
-- [ ] T007 [P] Escribir test en rojo de `normalizarTitulo` en `tests/unit/normalizar-titulo.test.ts`: acentos, mayúsculas, puntuación, comillas y guiones tipográficos, espacios múltiples, **contenido de paréntesis conservado como palabras**, artículo inicial y forma `"Titulo, El"` (ver [research.md § R3](./research.md))
+- [X] T007 [P] Escribir test en rojo de `normalizarTitulo` en `tests/unit/normalizar-titulo.test.ts`: acentos, mayúsculas, puntuación, comillas y guiones tipográficos, espacios múltiples, **contenido de paréntesis conservado como palabras**, artículo inicial y forma `"Titulo, El"` (ver [research.md § R3](./research.md))
 - [ ] T008 Implementar `normalizarTitulo` en `src/domain/normalizar-titulo.ts` hasta verde — **única implementación de normalización del sistema** (restricción de la constitución)
 - [ ] T009 [P] Escribir test en rojo de conversión y redondeo a centavos en `tests/unit/precio.test.ts`: string con coma y con punto, redondeo al centavo, rechazo de no numérico y de `<= 0`
 - [ ] T010 Implementar conversión de precio en `src/domain/precio.ts`
