@@ -1,0 +1,45 @@
+# Dependencias
+node_modules/
+
+# Build de Next.js
+.next/
+out/
+build/
+
+# TypeScript (generados: next-env.d.ts lo reescribe Next en cada build)
+*.tsbuildinfo
+next-env.d.ts
+
+# Cobertura de tests
+coverage/
+
+# Base de datos SQLite — Principio IV: el .db es el inventario real de la
+# librería y nunca se commitea. WAL y shared-memory incluidos.
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+
+# Excel del negocio — Principio IV. Los fixtures sintéticos de test son otra
+# cosa: no tienen datos reales y sin ellos los tests no corren, así que se
+# versionan (T034, T057).
+*.xlsx
+*.xls
+!tests/fixtures/excel/*.xlsx
+!tests/fixtures/excel/*.xls
+
+# Variables de entorno
+.env*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
