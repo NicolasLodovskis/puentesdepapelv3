@@ -1,0 +1,57 @@
+/*
+ * Estilos mínimos (T022). Un solo usuario, en su computadora: la prioridad es
+ * que se lea bien y que los importes y las cantidades sean fáciles de comparar
+ * de un vistazo, no la identidad visual.
+ */
+
+:root {
+  --tinta: #1c1917;
+  --tinta-suave: #57534e;
+  --papel: #fdfcfb;
+  --borde: #e7e5e4;
+  --acento: #7c2d12;
+  --error: #b91c1c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  line-height: 1.5;
+}
+
+.encabezado {
+  border-bottom: 1px solid var(--borde);
+  padding: 0.75rem 1.5rem;
+}
+
+.marca {
+  color: var(--acento);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contenido {
+  margin: 0 auto;
+  max-width: 60rem;
+  padding: 1.5rem;
+}
+
+/* Importes y cantidades: tabulares, para que las columnas se comparen alineadas. */
+.numero {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.error {
+  color: var(--error);
+}

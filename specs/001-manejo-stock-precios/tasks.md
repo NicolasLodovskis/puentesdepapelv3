@@ -58,13 +58,13 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 ### Persistencia
 
 - [X] T015 Escribir el esquema en `src/db/esquema.sql`: las 6 tablas de [data-model.md](./data-model.md), con `UNIQUE(titulo_normalizado)`, la columna derivada `editorial_normalizada`, los `CHECK` de `origen`, y las FK incluida `movimiento_stock.venta_id`
-- [ ] T016 Implementar apertura de conexión con `PRAGMA journal_mode = WAL` y `PRAGMA foreign_keys = ON` en `src/db/conexion.ts`
-- [ ] T017 Implementar migraciones idempotentes en `src/db/migraciones.ts`
-- [ ] T018 [P] Crear helper que provee una base temporal aislada por test en `tests/helpers/db-temporal.ts`
-- [ ] T019 Escribir test en rojo del invariante transaccional en `tests/integration/transaccion.test.ts`: si la inserción del historial falla, el cambio del dato **no** queda aplicado (FR-027, Principio III)
-- [ ] T020 Implementar el helper transaccional sobre `db.transaction(...)` en `src/db/transaccion.ts`
-- [ ] T021 [P] Escribir test en rojo en `tests/integration/esquema.test.ts` que verifica que la **base** rechaza título normalizado duplicado y `origen` fuera de la enumeración, no sólo el código
-- [ ] T022 Crear layout base y estilos mínimos en `src/app/layout.tsx`
+- [X] T016 Implementar apertura de conexión con `PRAGMA journal_mode = WAL` y `PRAGMA foreign_keys = ON` en `src/db/conexion.ts`
+- [X] T017 Implementar migraciones idempotentes en `src/db/migraciones.ts`
+- [X] T018 [P] Crear helper que provee una base temporal aislada por test en `tests/helpers/db-temporal.ts`
+- [X] T019 Escribir test en rojo del invariante transaccional en `tests/integration/transaccion.test.ts`: si la inserción del historial falla, el cambio del dato **no** queda aplicado (FR-027, Principio III)
+- [X] T020 Implementar el helper transaccional sobre `db.transaction(...)` en `src/db/transaccion.ts`
+- [X] T021 [P] Escribir test en rojo en `tests/integration/esquema.test.ts` que verifica que la **base** rechaza título normalizado duplicado y `origen` fuera de la enumeración, no sólo el código
+- [X] T022 Crear layout base y estilos mínimos en `src/app/layout.tsx`
 
 **Checkpoint**: dominio y persistencia listos — las historias pueden empezar.
 
