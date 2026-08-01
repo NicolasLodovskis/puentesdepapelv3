@@ -32,7 +32,21 @@ export type ResultadoPrecio =
  */
 const NUMERO = /^([+-]?)(\d+)(?:[.,](\d+))?$/;
 
-export function aEntero(valor: unknown): ResultadoPrecio {
+/** Motivos que puede dar la lectura de un entero, antes de juzgar su signo. */
+export type MotivoEnteroInvalido = Exclude<MotivoPrecioInvalido, 'no_positivo'>;
+
+export type ResultadoEntero =
+  { valido: true; entero: number } | { valido: false; motivo: MotivoEnteroInvalido };
+
+/**
+ * Lectura de un entero desde lo que llega de la UI o de una celda de Excel, sin
+ * juzgar su signo: devuelve el entero tal cual, incluidos el cero y los
+ * negativos. Es el borde numérico **compartido** por el precio (entero > 0) y
+ * por el stock (entero >= 0), que tienen la misma tolerancia de formato y sólo
+ * difieren en el rango admitido. Una segunda implementación acá haría que un
+ * `"3,00"` fuera aceptable como precio y no como stock, o al revés.
+ */
+export function interpretarEntero(valor: unknown): ResultadoEntero {
   if (valor === null || valor === undefined) {
     return { valido: false, motivo: 'ausente' };
   }
@@ -59,25 +73,36 @@ export function aEntero(valor: unknown): ResultadoPrecio {
   const [, signo = '', enteros = '', decimales] = coincidencia;
 
   // Se evalúan los decimales antes que el signo: para quien corrige el archivo,
-  // "el precio tiene decimales" es el arreglo concreto, y un importe negativo
-  // con decimales tiene los dos problemas.
+  // "tiene decimales" es el arreglo concreto, y un valor negativo con decimales
+  // tiene los dos problemas.
   if (decimales !== undefined && /[^0]/.test(decimales)) {
     return { valido: false, motivo: 'con_decimales' };
   }
 
-  const precio = Number(`${signo}${enteros}`);
+  const entero = Number(`${signo}${enteros}`);
 
   // Más allá del entero seguro, el valor guardado no sería el escrito: la
   // conversión pierde precisión en silencio. Rechazarlo es preferible a
   // persistir un importe distinto del que dice el archivo.
-  if (!Number.isSafeInteger(precio)) {
+  if (!Number.isSafeInteger(entero)) {
     return { valido: false, motivo: 'no_numerico' };
   }
 
-  return precio > 0 ? { valido: true, precio } : { valido: false, motivo: 'no_positivo' };
+  return { valido: true, entero };
 }
 
-function desdeNumero(valor: number): ResultadoPrecio {
+export function aEntero(valor: unknown): ResultadoPrecio {
+  const leido = interpretarEntero(valor);
+  if (!leido.valido) {
+    return leido;
+  }
+
+  return leido.entero > 0
+    ? { valido: true, precio: leido.entero }
+    : { valido: false, motivo: 'no_positivo' };
+}
+
+function desdeNumero(valor: number): ResultadoEntero {
   if (!Number.isFinite(valor)) {
     // NaN, Infinity, -Infinity.
     return { valido: false, motivo: 'no_numerico' };
@@ -91,5 +116,5 @@ function desdeNumero(valor: number): ResultadoPrecio {
     return { valido: false, motivo: 'no_numerico' };
   }
 
-  return valor > 0 ? { valido: true, precio: valor } : { valido: false, motivo: 'no_positivo' };
+  return { valido: true, entero: valor };
 }
