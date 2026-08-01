@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizarTitulo } from '@/domain/normalizar-titulo';
+import { normalizarEditorial, normalizarTitulo } from '@/domain/normalizar-titulo';
 
 /**
  * Reglas fijadas en research.md § R3 (FR-003). Esta función es la única
@@ -262,5 +262,49 @@ describe('normalizarTitulo', () => {
         expect(normalizarTitulo(entrada)).toMatch(/^[a-z0-9]+( [a-z0-9]+)*$/);
       }
     });
+  });
+});
+
+/**
+ * La editorial se normaliza aparte y con menos pasos que el título
+ * (data-model.md): minúsculas, sin acentos y espacios colapsados, pero **sin**
+ * tocar puntuación ni artículos. No es una clave y no participa del matcheo de
+ * los Excel, así que no necesita esa agresividad; y quitarle el artículo
+ * convertiría "La Bestia Equilátera" en "bestia equilatera", que no es como la
+ * librera la busca.
+ *
+ * Existe porque `LIKE` de SQLite ignora mayúsculas sólo en ASCII: sin esta
+ * columna derivada, buscar `anagrama` no encontraría `Anagramá`.
+ */
+describe('normalizarEditorial', () => {
+  const casos: ReadonlyArray<readonly [string, string]> = [
+    ['Anagrama', 'anagrama'],
+    ['ANAGRAMA', 'anagrama'],
+    ['Anagramá', 'anagrama'],
+    ['  Sudamericana  ', 'sudamericana'],
+    ['Fondo   de   Cultura', 'fondo de cultura'],
+    ['Emecé', 'emece'],
+    ['Siglo XXI', 'siglo xxi'],
+  ];
+
+  it.each(casos)('%s → %s', (entrada, esperado) => {
+    expect(normalizarEditorial(entrada)).toBe(esperado);
+  });
+
+  it('conserva el artículo, a diferencia del título', () => {
+    expect(normalizarEditorial('La Bestia Equilátera')).toBe('la bestia equilatera');
+  });
+
+  it('conserva la puntuación de un nombre propio', () => {
+    expect(normalizarEditorial('Alfaguara S.A.')).toBe('alfaguara s.a.');
+    // La puntuación sobrevive; el acento no, que es el punto de la función.
+    expect(normalizarEditorial('Del Fondo & Cía.')).toBe('del fondo & cia.');
+  });
+
+  it('es idempotente', () => {
+    for (const [entrada] of casos) {
+      const unaVez = normalizarEditorial(entrada);
+      expect(normalizarEditorial(unaVez)).toBe(unaVez);
+    }
   });
 });

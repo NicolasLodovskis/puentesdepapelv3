@@ -84,14 +84,14 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Implementation for User Story 1
 
-- [ ] T026 [US1] Implementar `altaLibro` en `src/services/catalogo.ts`, en una sola transacción: libro + `movimiento_stock` + `movimiento_precio` (depende de T020)
-- [ ] T027 [P] [US1] Implementar `buscarLibros` en `src/services/busqueda.ts` sobre `titulo_normalizado` y `editorial_normalizada`, por subcadena, filtrando por `estado = 'activo'`
-- [ ] T028 [US1] Server Action de alta en `src/app/actions/catalogo.ts`
-- [ ] T029 [P] [US1] Server Action de búsqueda en `src/app/actions/busqueda.ts`
-- [ ] T030 [US1] Formulario de alta con mensajes de validación por campo y **campo de foto opcional** en `src/app/libros/nuevo/page.tsx` (la foto se guarda ya; el embedding llega con T089)
-- [ ] T031 [US1] Pantalla de búsqueda y resultado con precio en `src/app/page.tsx`
-- [ ] T032 [P] [US1] Script de siembra de catálogo de prueba de ~2.000 libros en `scripts/sembrar.ts`
-- [ ] T033 [US1] Test de rendimiento RNF-01 (`< 1 s` p95 sobre el catálogo sembrado) en `tests/integration/us1-rendimiento.test.ts` (depende de T032)
+- [X] T026 [US1] Implementar `altaLibro` en `src/services/catalogo.ts`, en una sola transacción: libro + `movimiento_stock` + `movimiento_precio` (depende de T020)
+- [X] T027 [P] [US1] Implementar `buscarLibros` en `src/services/busqueda.ts` sobre `titulo_normalizado` y `editorial_normalizada`, por subcadena, filtrando por `estado = 'activo'`
+- [X] T028 [US1] Server Action de alta en `src/app/actions/catalogo.ts`
+- [X] T029 [P] [US1] Server Action de búsqueda en `src/app/actions/busqueda.ts`
+- [X] T030 [US1] Formulario de alta con mensajes de validación por campo y **campo de foto opcional** en `src/app/libros/nuevo/page.tsx` (la foto se guarda ya; el embedding llega con T089)
+- [X] T031 [US1] Pantalla de búsqueda y resultado con precio en `src/app/page.tsx`
+- [X] T032 [P] [US1] Script de siembra de catálogo de prueba de ~2.000 libros en `scripts/sembrar.ts`
+- [X] T033 [US1] Test de rendimiento RNF-01 (`< 1 s` p95 sobre el catálogo sembrado) en `tests/integration/us1-rendimiento.test.ts` (depende de T032)
 
 **Checkpoint**: US1 funciona sola y es demostrable — es el MVP.
 

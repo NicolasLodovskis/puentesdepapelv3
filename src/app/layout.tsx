@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import './globals.css';
 
@@ -17,9 +18,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="es">
       <body>
         <header className="encabezado">
-          <a className="marca" href="/">
+          <Link className="marca" href="/">
             Puentes de Papel
-          </a>
+          </Link>
         </header>
         <main className="contenido">{children}</main>
       </body>

@@ -77,3 +77,26 @@ export function normalizarTitulo(titulo: string): string {
 
   return palabras.join(' ');
 }
+
+/**
+ * Normalización de **editorial**, deliberadamente más floja que la de título
+ * (data-model.md): sólo los pasos 1, 3 y 5 —acentos, minúsculas y espacios—,
+ * sin tocar puntuación ni artículos.
+ *
+ * No es una clave ni participa del matcheo de los Excel, así que no necesita esa
+ * agresividad; y quitarle el artículo convertiría "La Bestia Equilátera" en
+ * "bestia equilatera", que no es como la librera la busca. Comparte el núcleo
+ * con `normalizarTitulo` para que las dos no puedan divergir en cómo tratan un
+ * acento o una mayúscula.
+ *
+ * Existe porque `LIKE` de SQLite ignora mayúsculas sólo en ASCII: sin esta
+ * columna derivada, buscar `anagrama` no encontraría `Anagramá`.
+ */
+export function normalizarEditorial(editorial: string): string {
+  return editorial
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}

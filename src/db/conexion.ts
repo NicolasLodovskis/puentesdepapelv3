@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { dirname, isAbsolute, join } from 'node:path';
+import { migrar } from './migraciones';
 
 /**
  * Apertura de la base SQLite (data-model.md, research.md § R7).
@@ -47,7 +48,12 @@ let instancia: Database.Database | null = null;
  * abiertos en cada recarga del servidor de desarrollo.
  */
 export function obtenerBase(): Database.Database {
-  instancia ??= abrirBase(rutaBase());
+  if (instancia === null) {
+    instancia = abrirBase(rutaBase());
+    // El esquema se aplica al abrir: es idempotente, así que la aplicación
+    // arranca contra una base vacía sin ningún paso manual previo.
+    migrar(instancia);
+  }
   return instancia;
 }
 
