@@ -50,7 +50,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 - [X] T008 Implementar `normalizarTitulo` en `src/domain/normalizar-titulo.ts` hasta verde — **única implementación de normalización del sistema** (restricción de la constitución)
 - [X] T009 [P] Escribir test en rojo de conversión a entero de moneda en `tests/unit/precio.test.ts`: string con coma y con punto, aceptación de la parte decimal cero (`1234,00`), rechazo **sin redondear** de toda otra parte decimal, rechazo de separador de miles, de no numérico, de ausente y de `<= 0` (FR-040; enmienda del 2026-07-30, antes era redondeo a centavos)
 - [X] T010 Implementar conversión de precio en `src/domain/precio.ts` — entero de moneda, sin centavos (FR-040)
-- [ ] T011 [P] Escribir test en rojo de `validarCamposLibro` en `tests/unit/validar-libro.test.ts`: título y editorial vacíos o sólo espacios, stock no entero o negativo, precio `<= 0` o no numérico
+- [X] T011 [P] Escribir test en rojo de `validarCamposLibro` en `tests/unit/validar-libro.test.ts`: título y editorial vacíos o sólo espacios, stock no entero o negativo, precio `<= 0` o no numérico
 - [ ] T012 Implementar `validarCamposLibro` en `src/domain/validar-libro.ts` — compartida por alta manual, edición y las dos ingestas
 - [ ] T013 [P] Definir los tipos `Resultado<T>` y `ErrorNegocio` en `src/domain/resultado.ts` según [contracts/server-actions.md](./contracts/server-actions.md), incluyendo `libroId` y `estado` en `titulo_duplicado`
 - [ ] T014 [P] Definir el vocabulario de categorías de fila en `src/domain/categorias-fila.ts` (las 8 de [data-model.md](./data-model.md))
