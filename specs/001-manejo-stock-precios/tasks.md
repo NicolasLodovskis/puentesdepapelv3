@@ -53,7 +53,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 - [X] T011 [P] Escribir test en rojo de `validarCamposLibro` en `tests/unit/validar-libro.test.ts`: título y editorial vacíos o sólo espacios, stock no entero o negativo, precio `<= 0` o no numérico
 - [X] T012 Implementar `validarCamposLibro` en `src/domain/validar-libro.ts` — compartida por alta manual, edición y las dos ingestas
 - [X] T013 [P] Definir los tipos `Resultado<T>` y `ErrorNegocio` en `src/domain/resultado.ts` según [contracts/server-actions.md](./contracts/server-actions.md), incluyendo `libroId` y `estado` en `titulo_duplicado`
-- [ ] T014 [P] Definir el vocabulario de categorías de fila en `src/domain/categorias-fila.ts` (las 8 de [data-model.md](./data-model.md))
+- [X] T014 [P] Definir el vocabulario de categorías de fila en `src/domain/categorias-fila.ts` (las 8 de [data-model.md](./data-model.md))
 
 ### Persistencia
 
