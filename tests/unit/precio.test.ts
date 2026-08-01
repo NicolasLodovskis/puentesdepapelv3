@@ -157,6 +157,27 @@ describe('aEntero', () => {
     });
   });
 
+  describe('límite de representación', () => {
+    /**
+     * Más allá del entero seguro de JavaScript, el valor guardado no sería el
+     * escrito: la conversión pierde precisión en silencio y persistiría un
+     * importe distinto del que dice el archivo. Rechazarlo es preferible
+     * (Principio II). En la práctica no aparece con precios de librería; la
+     * guarda existe para que un error de tipeo de veinte dígitos no entre.
+     */
+    it('acepta el entero seguro más grande', () => {
+      expect(aEntero('9007199254740991')).toEqual({ valido: true, precio: 9007199254740991 });
+    });
+
+    it('rechaza lo que no se puede representar con exactitud', () => {
+      expect(aEntero('99999999999999999999')).toEqual({ valido: false, motivo: 'no_numerico' });
+      expect(aEntero(Number.MAX_SAFE_INTEGER + 2)).toEqual({
+        valido: false,
+        motivo: 'no_numerico',
+      });
+    });
+  });
+
   describe('invariantes del resultado', () => {
     it('todo resultado válido es un entero estrictamente positivo', () => {
       for (const entrada of ['1234', '1234,00', 1234, '1', '  15000  ']) {
