@@ -57,7 +57,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Persistencia
 
-- [ ] T015 Escribir el esquema en `src/db/esquema.sql`: las 6 tablas de [data-model.md](./data-model.md), con `UNIQUE(titulo_normalizado)`, la columna derivada `editorial_normalizada`, los `CHECK` de `origen`, y las FK incluida `movimiento_stock.venta_id`
+- [X] T015 Escribir el esquema en `src/db/esquema.sql`: las 6 tablas de [data-model.md](./data-model.md), con `UNIQUE(titulo_normalizado)`, la columna derivada `editorial_normalizada`, los `CHECK` de `origen`, y las FK incluida `movimiento_stock.venta_id`
 - [ ] T016 Implementar apertura de conexión con `PRAGMA journal_mode = WAL` y `PRAGMA foreign_keys = ON` en `src/db/conexion.ts`
 - [ ] T017 Implementar migraciones idempotentes en `src/db/migraciones.ts`
 - [ ] T018 [P] Crear helper que provee una base temporal aislada por test en `tests/helpers/db-temporal.ts`
