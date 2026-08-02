@@ -250,7 +250,7 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Implementation for User Story 7
 
-- [ ] T080 [US7] Implementar `consultarHistorial` en `src/services/historial.ts`, convirtiendo el rango de fechas local a UTC
+- [ ] T080 [US7] Implementar `consultarHistorial` en `src/services/historial.ts`; el rango de fechas se compara directo, porque las marcas ya están en la hora de la librería (R6 enmendado)
 - [ ] T081 [US7] Pantalla de historiales con los tres tipos y sus filtros en `src/app/historiales/page.tsx`
 
 > **Limitación conocida (CHK021)**: el filtro por título resuelve contra el título **vigente**. Un libro renombrado muestra sus entradas viejas bajo el nombre nuevo, por no historizar renombres.

@@ -8,7 +8,8 @@ Motor: SQLite, archivo único, vía `better-sqlite3`. `PRAGMA journal_mode = WAL
 
 Convenciones que salen de la investigación: los importes son **enteros de unidad de moneda**, sin
 centavos (R5, PRD RF-01/RF-31), las
-marcas temporales son **`TEXT` ISO-8601 UTC con milisegundos** (R6), y los historiales son
+marcas temporales son **`TEXT` ISO-8601 con milisegundos en la hora de la librería, UTC-3 con
+desfase explícito** (R6), y los historiales son
 **append-only** (Principio III, FR-028).
 
 ---
@@ -31,7 +32,7 @@ La unidad del catálogo. Nunca se borra físicamente.
 | `stock` | `INTEGER NOT NULL` | `>= 0`, entero (FR-002) |
 | `precio` | `INTEGER NOT NULL` | `> 0` y entero, sin decimales (FR-002, FR-040) |
 | `estado` | `TEXT NOT NULL` | `'activo'` \| `'archivado'`. Default `'activo'` |
-| `creado_en` | `TEXT NOT NULL` | ISO-8601 UTC |
+| `creado_en` | `TEXT NOT NULL` | ISO-8601 con desfase `-03:00` |
 
 **Unicidad — la decisión más consecuente del modelo**: `UNIQUE(titulo_normalizado)` sobre **toda**
 la tabla, sin importar `estado` y **sin incluir `editorial`**. Es la restricción de PRD §8: no
@@ -65,7 +66,7 @@ Historial de precio. Append-only.
 |---|---|---|
 | `id` | `INTEGER PK AUTOINCREMENT` | Desempata el orden ante igual `fecha` (R6) |
 | `libro_id` | `INTEGER NOT NULL` | `FK → libro(id)` |
-| `fecha` | `TEXT NOT NULL` | ISO-8601 UTC |
+| `fecha` | `TEXT NOT NULL` | ISO-8601 con desfase `-03:00` |
 | `precio_anterior` | `INTEGER NOT NULL` | `0` cuando el origen es un alta (FR-031) |
 | `precio_nuevo` | `INTEGER NOT NULL` | `> 0` |
 | `origen` | `TEXT NOT NULL` | Ver enumeración abajo |
@@ -84,7 +85,7 @@ Historial de stock. Append-only.
 |---|---|---|
 | `id` | `INTEGER PK AUTOINCREMENT` | Desempate de orden (R6) |
 | `libro_id` | `INTEGER NOT NULL` | `FK → libro(id)` |
-| `fecha` | `TEXT NOT NULL` | ISO-8601 UTC |
+| `fecha` | `TEXT NOT NULL` | ISO-8601 con desfase `-03:00` |
 | `cantidad_anterior` | `INTEGER NOT NULL` | `>= 0`; `0` cuando el origen es un alta (FR-031) |
 | `cantidad_resultante` | `INTEGER NOT NULL` | `>= 0` |
 | `origen` | `TEXT NOT NULL` | Ver enumeración abajo |
@@ -106,7 +107,7 @@ Una unidad vendida. Append-only.
 |---|---|---|
 | `id` | `INTEGER PK AUTOINCREMENT` | |
 | `libro_id` | `INTEGER NOT NULL` | `FK → libro(id)` |
-| `fecha` | `TEXT NOT NULL` | ISO-8601 UTC |
+| `fecha` | `TEXT NOT NULL` | ISO-8601 con desfase `-03:00` |
 | `precio_venta` | `INTEGER NOT NULL` | Copia del `precio` vigente al vender (FR-009) |
 
 El precio se **copia**, no se referencia: cambiar el precio del libro después no debe alterar una
@@ -125,7 +126,7 @@ los supuestos de la spec).
 | Campo | Tipo | Reglas |
 |---|---|---|
 | `id` | `INTEGER PK AUTOINCREMENT` | |
-| `fecha` | `TEXT NOT NULL` | ISO-8601 UTC |
+| `fecha` | `TEXT NOT NULL` | ISO-8601 con desfase `-03:00` |
 | `nombre_archivo` | `TEXT NOT NULL` | |
 | `filas_totales` | `INTEGER NOT NULL` | |
 | `filas_aplicadas` | `INTEGER NOT NULL` | |

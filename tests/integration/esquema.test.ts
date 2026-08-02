@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { VERSION_ESQUEMA } from '@/db/migraciones';
 import { baseTemporal } from '../helpers/db-temporal';
 
 /**
@@ -380,7 +381,7 @@ describe('esquema', () => {
 
     it('registra la versión del esquema, para que una migración futura sepa de dónde parte', () => {
       const db = baseTemporal();
-      expect(db.pragma('user_version', { simple: true })).toBe(1);
+      expect(db.pragma('user_version', { simple: true })).toBe(VERSION_ESQUEMA);
     });
 
     it('aplicar el esquema dos veces no falla ni duplica nada', async () => {

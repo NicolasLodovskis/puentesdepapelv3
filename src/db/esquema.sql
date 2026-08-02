@@ -2,7 +2,8 @@
 --
 -- Convenciones:
 --   · Importes: INTEGER, entero de unidad de moneda, sin centavos (R5, FR-040).
---   · Marcas temporales: TEXT ISO-8601 UTC con milisegundos (R6).
+--   · Marcas temporales: TEXT ISO-8601 con milisegundos en la hora de la
+--     librería, UTC-3 con desfase explícito: 2026-08-01T22:08:40.583-03:00 (R6).
 --   · Historiales: append-only. No hay DELETE ni UPDATE sobre ellos (FR-028).
 --
 -- Las restricciones viven en la base y no sólo en el código a propósito: un

@@ -78,7 +78,7 @@ describe('altaLibro', () => {
       });
     });
 
-    it('sella la fecha de creación en ISO-8601 UTC con milisegundos', () => {
+    it('sella la fecha de creación en la hora de la librería, con el desfase explícito', () => {
       const db = baseTemporal();
 
       const resultado = altaLibro(db, VALIDO);
@@ -86,7 +86,7 @@ describe('altaLibro', () => {
       if (!resultado.ok) return;
 
       expect(libroDe(db, resultado.valor.libroId).creado_en).toMatch(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}-03:00$/,
       );
     });
   });

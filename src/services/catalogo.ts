@@ -1,5 +1,6 @@
 import type BetterSqlite3 from 'better-sqlite3';
 import { enTransaccion } from '@/db/transaccion';
+import { ahora } from '@/domain/fecha';
 import { normalizarEditorial, normalizarTitulo } from '@/domain/normalizar-titulo';
 import type { EstadoLibro, Resultado } from '@/domain/resultado';
 import { validarCamposLibro } from '@/domain/validar-libro';
@@ -20,11 +21,6 @@ export interface AltaLibroInput {
   stock: unknown;
   precio: unknown;
   foto?: Uint8Array;
-}
-
-/** Marca temporal en ISO-8601 UTC con milisegundos (R6). */
-function ahora(): string {
-  return new Date().toISOString();
 }
 
 interface LibroExistente {

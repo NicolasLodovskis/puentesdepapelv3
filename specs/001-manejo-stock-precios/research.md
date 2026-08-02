@@ -182,9 +182,25 @@ librería, y comparaciones más lentas).
 
 ## R6 — Fecha/hora del historial y orden (cierra CHK018, CHK019)
 
-**Decision**: guardar cada marca temporal como **`TEXT` en ISO-8601 con milisegundos en UTC**
-(`YYYY-MM-DDTHH:MM:SS.sssZ`); mostrar y filtrar en la zona local de la máquina. El **orden de los
+> **Enmendado el 2026-08-02** por decisión de la propietaria: las marcas se guardan en la **hora de
+> la librería (UTC-3)** en lugar de UTC. Lo que no cambia es el resto de R6 —formato ISO-8601 con
+> milisegundos, y desempate del orden por `id`—, ni las dos propiedades que lo justifican.
+
+**Decision**: guardar cada marca temporal como **`TEXT` en ISO-8601 con milisegundos y desfase
+explícito** (`YYYY-MM-DDTHH:MM:SS.sss-03:00`), en la hora de la librería. El **orden de los
 historiales es por marca temporal y, ante empate, por `id` autoincremental ascendente**.
+
+**Por qué el desfase va escrito y no se guarda una hora suelta**: una hora local sin zona es
+ambigua y no permite reconstruir el instante. Con el desfase explícito la marca sigue siendo
+inequívoca, y como Argentina **no aplica horario de verano** el desfase es el mismo en todas las
+filas, así que el orden lexicográfico sigue coincidiendo con el cronológico — que es la propiedad
+de la que depende el `ORDER BY` en SQLite, sin tipo fecha nativo.
+
+**Consecuencia práctica**: abrir el `.db` con cualquier visor muestra la hora en que la librera hizo
+la operación, sin conversión mental. Y los filtros de historial (FR-026) comparan directo contra lo
+que la usuaria escribe, sin convertir el rango. Una única función —`src/domain/fecha.ts`— produce
+todas las marcas; un `toISOString()` suelto en otro módulo escribiría en UTC y mezclaría desfases,
+así que hay un test que lo impide.
 
 **Rationale**: la spec pedía historial con "fecha" sin precisar precisión ni zona, y de eso
 dependen tanto el filtro por fecha (FR-026) como el orden de registros. ISO-8601 en UTC ordena
@@ -192,10 +208,10 @@ lexicográficamente igual que cronológicamente, lo que hace el `ORDER BY` trivi
 SQLite sin tipo `DATE` nativo. El desempate por `id` resuelve el caso de las dos entradas que un
 alta escribe en la misma transacción (stock y precio), que comparten milisegundo.
 
-**Alternatives considered**: epoch en `INTEGER` (equivalente en corrección, pero ilegible al
-inspeccionar el `.db` a mano, que es un modo de diagnóstico esperable en un sistema de un archivo);
-guardar hora local sin zona (rechazado: ambiguo en los cambios de horario y no ordenable de forma
-confiable).
+**Alternatives considered**: **UTC** (la decisión anterior; correcta, pero obliga a convertir en
+cada lectura y hace que inspeccionar el `.db` a mano muestre horas que no son las de la librería);
+epoch en `INTEGER` (equivalente en corrección, pero ilegible al inspeccionarlo); guardar hora local
+**sin** el desfase (rechazado: ambigua, no permite reconstruir el instante).
 
 ---
 

@@ -58,3 +58,30 @@ describe("módulos 'use server'", () => {
     expect(estados).toContain('ESTADO_BUSQUEDA_INICIAL');
   });
 });
+
+/**
+ * Una sola fuente de marcas temporales.
+ *
+ * `src/domain/fecha.ts` es la única que puede producirlas. Un `toISOString()`
+ * suelto en otro módulo escribiría en UTC, y las filas quedarían con desfases
+ * mezclados: el orden lexicográfico dejaría de coincidir con el cronológico y
+ * el historial mostraría los movimientos desordenados, en silencio. Es la misma
+ * lógica con que la constitución exige una única normalización de títulos.
+ */
+describe('marcas temporales', () => {
+  function archivosFuente(directorio: string): string[] {
+    return readdirSync(directorio, { withFileTypes: true }).flatMap((entrada) => {
+      const ruta = join(directorio, entrada.name);
+      if (entrada.isDirectory()) return archivosFuente(ruta);
+      return /\.tsx?$/.test(entrada.name) ? [ruta] : [];
+    });
+  }
+
+  it('sólo el módulo de fecha genera marcas temporales', () => {
+    const infractores = archivosFuente(join(process.cwd(), 'src'))
+      .filter((ruta) => !ruta.endsWith(join('domain', 'fecha.ts')))
+      .filter((ruta) => readFileSync(ruta, 'utf8').includes('toISOString('));
+
+    expect(infractores).toEqual([]);
+  });
+});

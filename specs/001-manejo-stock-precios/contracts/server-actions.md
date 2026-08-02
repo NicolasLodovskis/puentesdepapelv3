@@ -159,7 +159,7 @@ function consultarHistorial(input: {
 }): Promise<EntradaHistorial[]>
 ```
 
-`desde`/`hasta` son fechas locales que se convierten a rango UTC (R6). El orden es por `fecha`
+`desde`/`hasta` son fechas en la hora de la librería y se comparan directo contra las marcas guardadas, que están en la misma zona (R6). El orden es por `fecha`
 descendente y, ante empate, por `id` descendente.
 
 > **Abierto (CHK021)**: el filtro por `titulo` resuelve contra el título **vigente** del libro. Si
