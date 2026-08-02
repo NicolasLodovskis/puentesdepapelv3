@@ -93,7 +93,21 @@ export function normalizarTitulo(titulo: string): string {
  * columna derivada, buscar `anagrama` no encontraría `Anagramá`.
  */
 export function normalizarEditorial(editorial: string): string {
-  return editorial
+  return plegarTexto(editorial);
+}
+
+/**
+ * Los pasos 1, 3 y 5 sueltos: acentos, minúsculas y espacios. Es el núcleo
+ * compartido por la normalización de editorial y por el reconocimiento de
+ * encabezados de Excel (FR-039 c), que necesitan exactamente esa tolerancia y
+ * ninguna más — no tocan puntuación ni artículos.
+ *
+ * Está acá y no duplicado en cada lugar para que no puedan divergir en cómo
+ * tratan un acento: si `" Precio "` se reconociera con una regla y `Anagramá`
+ * se guardara con otra, la misma tilde valdría distinto según el camino.
+ */
+export function plegarTexto(texto: string): string {
+  return texto
     .normalize('NFD')
     .replace(/\p{M}+/gu, '')
     .toLowerCase()

@@ -18,9 +18,14 @@ export default async function Page() {
     <>
       <div className="cabecera-pagina">
         <h1>Consultar stock y precio</h1>
-        <Link className="boton-secundario" href="/libros/nuevo">
-          Cargar un libro
-        </Link>
+        <div className="acciones-cabecera">
+          <Link className="boton-secundario" href="/excel/alta-masiva">
+            Alta masiva por Excel
+          </Link>
+          <Link className="boton-secundario" href="/libros/nuevo">
+            Cargar un libro
+          </Link>
+        </div>
       </div>
       <Buscador estadoInicial={catalogo} />
     </>

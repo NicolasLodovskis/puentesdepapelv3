@@ -37,9 +37,19 @@ function buscarPorTituloNormalizado(
     .get(tituloNormalizado) as LibroExistente | undefined;
 }
 
+/**
+ * Por dónde entró el libro. Es el `origen` de sus dos entradas iniciales de
+ * historial, y la única diferencia entre el alta manual y la del Excel de alta
+ * masiva: todo lo demás —validación, unicidad, transacción, historial— tiene que
+ * ser idéntico, o un libro cargado por Excel quedaría peor trazado que uno
+ * cargado a mano (FR-017, FR-031).
+ */
+export type OrigenAlta = 'alta manual' | 'alta por Excel';
+
 export function altaLibro(
   db: BetterSqlite3.Database,
   input: AltaLibroInput,
+  origen: OrigenAlta = 'alta manual',
 ): Resultado<{ libroId: number }> {
   const validado = validarCamposLibro(input);
   if (!validado.ok) {
@@ -98,13 +108,13 @@ export function altaLibro(
     db.prepare(
       `INSERT INTO movimiento_stock (libro_id, fecha, cantidad_anterior,
                                      cantidad_resultante, origen)
-       VALUES (?, ?, 0, ?, 'alta manual')`,
-    ).run(id, fecha, stock);
+       VALUES (?, ?, 0, ?, ?)`,
+    ).run(id, fecha, stock, origen);
 
     db.prepare(
       `INSERT INTO movimiento_precio (libro_id, fecha, precio_anterior, precio_nuevo, origen)
-       VALUES (?, ?, 0, ?, 'alta manual')`,
-    ).run(id, fecha, precio);
+       VALUES (?, ?, 0, ?, ?)`,
+    ).run(id, fecha, precio, origen);
 
     return id;
   });

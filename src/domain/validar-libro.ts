@@ -47,13 +47,33 @@ function aTexto(valor: unknown): string | null {
   return null;
 }
 
+/**
+ * El título y el precio se validan también por separado porque el Excel de
+ * **actualización de precios** trae sólo esas dos columnas: sin esto, ese flujo
+ * necesitaría su propia validación y podría aceptar un precio que el alta
+ * rechaza, o al revés.
+ */
+export function validarTitulo(valor: unknown): Resultado<string> {
+  const titulo = aTexto(valor);
+  return titulo === null
+    ? invalido('titulo', 'El título no puede estar vacío.')
+    : { ok: true, valor: titulo };
+}
+
+export function validarPrecio(valor: unknown): Resultado<number> {
+  const leido = aEntero(valor);
+  return leido.valido
+    ? { ok: true, valor: leido.precio }
+    : invalido('precio', MENSAJES_PRECIO[leido.motivo]);
+}
+
 export function validarCamposLibro(input: CamposLibroCrudos): Resultado<CamposLibro> {
   // El orden es parte del contrato: `ErrorNegocio` reporta un solo campo, así
   // que sin una precedencia fija el motivo informado en el reporte de un Excel
   // dependería de un detalle de implementación.
-  const titulo = aTexto(input.titulo);
-  if (titulo === null) {
-    return invalido('titulo', 'El título no puede estar vacío.');
+  const titulo = validarTitulo(input.titulo);
+  if (!titulo.ok) {
+    return titulo;
   }
 
   const editorial = aTexto(input.editorial);
@@ -69,14 +89,19 @@ export function validarCamposLibro(input: CamposLibroCrudos): Resultado<CamposLi
     return invalido('stock', 'El stock no puede ser negativo.');
   }
 
-  const precioLeido = aEntero(input.precio);
-  if (!precioLeido.valido) {
-    return invalido('precio', MENSAJES_PRECIO[precioLeido.motivo]);
+  const precio = validarPrecio(input.precio);
+  if (!precio.ok) {
+    return precio;
   }
 
   return {
     ok: true,
-    valor: { titulo, editorial, stock: stockLeido.entero, precio: precioLeido.precio },
+    valor: {
+      titulo: titulo.valor,
+      editorial,
+      stock: stockLeido.entero,
+      precio: precio.valor,
+    },
   };
 }
 

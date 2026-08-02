@@ -114,12 +114,12 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Implementation for User Story 2
 
-- [ ] T038 [US2] Implementar lectura por streaming y el reconocimiento de encabezados de FR-039 en `src/excel/leer.ts`: primera hoja, primera fila no vacía, comparación sin espacios/mayúsculas/acentos, sin sinónimos, columnas extra ignoradas, y rechazo con la lista de encabezados encontrados si falta o se repite una obligatoria
-- [ ] T039 [US2] Implementar la clasificación de filas con el orden de precedencia de FR-021b en `src/excel/clasificar.ts`: primero `invalida`, después `duplicada_en_archivo` (posicional), y al final las que dependen del catálogo. Compartida por los dos flujos (depende de T014)
-- [ ] T040 [US2] Implementar `importacion-alta` con una transacción **por fila** en `src/services/importacion-alta.ts` (depende de T038, T039)
-- [ ] T041 [US2] Route Handler `POST` en `src/app/api/excel/alta-masiva/route.ts`
-- [ ] T042 [US2] Pantalla de subida y reporte en `src/app/excel/alta-masiva/page.tsx`
-- [ ] T043 [US2] Test de volumen RNF-03 (archivo de 5.000 filas, sin fallar ni truncar) en `tests/integration/us2-volumen.test.ts`
+- [X] T038 [US2] Implementar lectura por streaming y el reconocimiento de encabezados de FR-039 en `src/excel/leer.ts`: primera hoja, primera fila no vacía, comparación sin espacios/mayúsculas/acentos, sin sinónimos, columnas extra ignoradas, y rechazo con la lista de encabezados encontrados si falta o se repite una obligatoria
+- [X] T039 [US2] Implementar la clasificación de filas con el orden de precedencia de FR-021b en `src/excel/clasificar.ts`: primero `invalida`, después `duplicada_en_archivo` (posicional), y al final las que dependen del catálogo. Compartida por los dos flujos (depende de T014)
+- [X] T040 [US2] Implementar `importacion-alta` con una transacción **por fila** en `src/services/importacion-alta.ts` (depende de T038, T039)
+- [X] T041 [US2] Route Handler `POST` en `src/app/api/excel/alta-masiva/route.ts`
+- [X] T042 [US2] Pantalla de subida y reporte en `src/app/excel/alta-masiva/page.tsx`
+- [X] T043 [US2] Test de volumen RNF-03 (archivo de 5.000 filas, sin fallar ni truncar) en `tests/integration/us2-volumen.test.ts`
 
 > **Resuelto (CHK010)**: en alta masiva se evalúa **sólo coincidencia exacta** y una variante de
 > edición es un **libro nuevo** — si existe "El Principito", la fila "El Principito (tapa dura)" crea
