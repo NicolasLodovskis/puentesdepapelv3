@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import { buscarLibrosAction } from '@/app/actions/busqueda';
-import { ESTADO_BUSQUEDA_INICIAL } from '@/app/actions/estados';
+import type { EstadoBusqueda } from '@/app/actions/estados';
 
 /**
  * Búsqueda y consulta de precio (T031) — la pantalla principal, porque es la
@@ -13,8 +13,8 @@ import { ESTADO_BUSQUEDA_INICIAL } from '@/app/actions/estados';
  * mostrar una tabla vacía, y nunca se ofrece un libro aproximado como si fuera
  * el buscado (Principio II).
  */
-export function Buscador() {
-  const [estado, accion, buscando] = useActionState(buscarLibrosAction, ESTADO_BUSQUEDA_INICIAL);
+export function Buscador({ estadoInicial }: { estadoInicial: EstadoBusqueda }) {
+  const [estado, accion, buscando] = useActionState(buscarLibrosAction, estadoInicial);
 
   return (
     <>
@@ -24,7 +24,7 @@ export function Buscador() {
           <input
             name="texto"
             type="search"
-            placeholder="Título o editorial"
+            placeholder="Título o editorial — vacío lista todo"
             autoComplete="off"
             autoFocus
           />
@@ -63,14 +63,14 @@ function Resultados({
     tieneFoto: boolean;
   }>;
 }) {
-  if (texto.trim() === '') {
-    return <p className="vacio">Escribí un título o una editorial para buscar.</p>;
-  }
+  const esCatalogoCompleto = texto.trim() === '';
 
   if (libros.length === 0) {
     return (
       <p className="vacio" role="status">
-        Ningún libro del catálogo coincide con «{texto}».
+        {esCatalogoCompleto
+          ? 'Todavía no hay libros cargados.'
+          : `Ningún libro del catálogo coincide con «${texto}».`}
       </p>
     );
   }
@@ -78,7 +78,9 @@ function Resultados({
   return (
     <>
       <p className="conteo" role="status">
-        {libros.length === 1 ? '1 libro encontrado' : `${libros.length} libros encontrados`}
+        {esCatalogoCompleto
+          ? `Catálogo completo · ${libros.length} ${libros.length === 1 ? 'libro' : 'libros'}`
+          : `${libros.length} ${libros.length === 1 ? 'libro encontrado' : 'libros encontrados'}`}
       </p>
       <table className="tabla-libros">
         <thead>

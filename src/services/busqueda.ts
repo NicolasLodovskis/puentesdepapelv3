@@ -44,15 +44,26 @@ const SELECCION = `
    WHERE estado = 'activo'
 `;
 
+/**
+ * Orden alfabético en español sobre el título **tal como se muestra** (RF-10).
+ *
+ * Se ordena acá y no con `ORDER BY` porque SQLite compara byte a byte: las
+ * palabras con acento caerían después de la z y la ñ quedaría fuera de lugar.
+ * `Intl.Collator` con locale `es` da el orden que espera una persona, y
+ * `numeric` hace que "Tomo 2" preceda a "Tomo 10" en vez de ordenarse como
+ * texto. A 2.000 libros ordenar en memoria es despreciable.
+ */
+const ORDEN_ALFABETICO = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
+
 export function buscarLibros(
   db: BetterSqlite3.Database,
   input: { texto: string; campo: CampoBusqueda },
 ): LibroResumen[] {
-  // Una búsqueda vacía devuelve vacío en lugar del catálogo entero: `LIKE '%%'`
-  // matchearía todo, y presentar 2.000 libros como "resultado" de no haber
-  // buscado nada no es una respuesta útil ni honesta.
+  // Con el término vacío se lista el catálogo activo completo: es la vista de
+  // catálogo (RF-10). Sin ella, ver un libro exigiría saber de antemano cómo se
+  // llama.
   if (input.texto.trim() === '') {
-    return [];
+    return ordenar(db.prepare(SELECCION).all() as FilaLibro[]);
   }
 
   const porTitulo = normalizarTitulo(input.texto);
@@ -80,8 +91,14 @@ export function buscarLibros(
   // Un OR en una sola consulta: un libro que coincide por los dos campos sale
   // una vez sola, sin necesitar deduplicar después.
   const filas = db
-    .prepare(`${SELECCION} AND (${condiciones.join(' OR ')}) ORDER BY titulo_normalizado`)
+    .prepare(`${SELECCION} AND (${condiciones.join(' OR ')})`)
     .all(...parametros) as FilaLibro[];
 
-  return filas.map(({ tieneFoto, ...resto }) => ({ ...resto, tieneFoto: tieneFoto === 1 }));
+  return ordenar(filas);
+}
+
+function ordenar(filas: FilaLibro[]): LibroResumen[] {
+  return filas
+    .map(({ tieneFoto, ...resto }) => ({ ...resto, tieneFoto: tieneFoto === 1 }))
+    .sort((a, b) => ORDEN_ALFABETICO.compare(a.titulo, b.titulo));
 }

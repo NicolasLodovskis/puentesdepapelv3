@@ -203,11 +203,89 @@ describe('buscarLibros', () => {
       expect(resultados[0]).not.toHaveProperty('foto');
     });
 
-    it('una búsqueda vacía no devuelve el catálogo entero por accidente', () => {
+    /**
+     * RF-10: con el término vacío se lista el catálogo activo completo. Es la
+     * vista de catálogo; sin ella, ver un libro exigiría saber de antemano cómo
+     * se llama.
+     */
+    it('una búsqueda vacía lista el catálogo activo completo', () => {
       const db = baseTemporal();
       sembrar(db);
 
-      expect(buscarLibros(db, { texto: '   ', campo: 'ambos' })).toEqual([]);
+      const todos = buscarLibros(db, { texto: '', campo: 'ambos' });
+
+      expect(todos).toHaveLength(5);
+      expect(buscarLibros(db, { texto: '   ', campo: 'ambos' })).toHaveLength(5);
+    });
+
+    it('el listado completo también excluye los archivados', () => {
+      const db = baseTemporal();
+      sembrar(db);
+      db.prepare(
+        "UPDATE libro SET estado = 'archivado' WHERE titulo_normalizado = 'rayuela'",
+      ).run();
+
+      const todos = buscarLibros(db, { texto: '', campo: 'ambos' });
+
+      expect(todos).toHaveLength(4);
+      expect(titulos(todos)).not.toContain('Rayuela');
+    });
+  });
+  describe('orden alfabético por título (RF-10)', () => {
+    /**
+     * Se ordena por el título **tal como se muestra**, con comparación en
+     * español. SQLite compara byte a byte, así que un ORDER BY dejaría las
+     * palabras con acento después de la z; por eso el orden se resuelve con
+     * `Intl.Collator` y no en la consulta.
+     */
+    it('ordena alfabéticamente, no por orden de carga', () => {
+      const db = baseTemporal();
+      sembrar(db);
+
+      const listado = buscarLibros(db, { texto: '', campo: 'ambos' }).map((l) => l.titulo);
+
+      expect(listado).toEqual([
+        'Cien años de soledad',
+        'El Principito',
+        'Ficciones',
+        'Los detectives salvajes',
+        'Rayuela',
+      ]);
+    });
+
+    it('los acentos no mandan al final de la lista', () => {
+      const db = baseTemporal();
+      for (const titulo of ['Zorro', 'Ámbar', 'Ana', 'Ñandú', 'Nube']) {
+        expect(altaLibro(db, { titulo, editorial: 'E', stock: 1, precio: 1000 }).ok).toBe(true);
+      }
+
+      const listado = buscarLibros(db, { texto: '', campo: 'ambos' }).map((l) => l.titulo);
+
+      // La Ñ es letra propia del alfabeto español y va después de toda la N,
+      // así que "Nube" precede a "Ñandú". El acento, en cambio, no altera el orden.
+      expect(listado).toEqual(['Ámbar', 'Ana', 'Nube', 'Ñandú', 'Zorro']);
+    });
+
+    it('los números se ordenan por valor y no como texto', () => {
+      const db = baseTemporal();
+      for (const titulo of ['Tomo 10', 'Tomo 2', 'Tomo 1']) {
+        expect(altaLibro(db, { titulo, editorial: 'E', stock: 1, precio: 1000 }).ok).toBe(true);
+      }
+
+      const listado = buscarLibros(db, { texto: 'tomo', campo: 'titulo' }).map((l) => l.titulo);
+
+      expect(listado).toEqual(['Tomo 1', 'Tomo 2', 'Tomo 10']);
+    });
+
+    it('los resultados de una búsqueda con término también vienen ordenados', () => {
+      const db = baseTemporal();
+      sembrar(db);
+
+      const listado = buscarLibros(db, { texto: 'anagrama', campo: 'editorial' }).map(
+        (l) => l.titulo,
+      );
+
+      expect(listado).toEqual(['Los detectives salvajes', 'Rayuela']);
     });
   });
 });

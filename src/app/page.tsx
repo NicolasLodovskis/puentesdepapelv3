@@ -1,7 +1,19 @@
 import Link from 'next/link';
+import { buscarLibrosAction } from '@/app/actions/busqueda';
+import { ESTADO_BUSQUEDA_INICIAL } from '@/app/actions/estados';
 import { Buscador } from './buscador';
 
-export default function Page() {
+/**
+ * La pantalla lee la base en cada visita, así que no puede prerenderizarse: un
+ * catálogo congelado en tiempo de build mostraría datos viejos.
+ */
+export const dynamic = 'force-dynamic';
+
+export default async function Page() {
+  // Con el término vacío la acción devuelve el catálogo activo completo (RF-10),
+  // que es lo que se ve al abrir la pantalla sin haber buscado nada.
+  const catalogo = await buscarLibrosAction(ESTADO_BUSQUEDA_INICIAL, new FormData());
+
   return (
     <>
       <div className="cabecera-pagina">
@@ -10,7 +22,7 @@ export default function Page() {
           Cargar un libro
         </Link>
       </div>
-      <Buscador />
+      <Buscador estadoInicial={catalogo} />
     </>
   );
 }

@@ -46,6 +46,9 @@ describe('rendimiento de la búsqueda (RNF-01)', () => {
       { texto: 'anagrama', campo: 'editorial' as const },
       { texto: 'invierno', campo: 'ambos' as const },
       { texto: 'moby dick', campo: 'ambos' as const },
+      // El catálogo completo (RF-10): trae y ordena las 2.000 filas, así que es
+      // la consulta más cara de la pantalla principal.
+      { texto: '', campo: 'ambos' as const },
     ];
 
     const muestras = consultas.flatMap((consulta) => medir(20, () => buscarLibros(db, consulta)));

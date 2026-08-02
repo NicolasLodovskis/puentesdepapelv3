@@ -416,7 +416,10 @@ a todos los flujos.
 **Consulta**
 
 - **FR-005**: El sistema MUST permitir buscar libros por nombre o por editorial, devolviendo
-  los libros **activos** coincidentes con su precio. *(RF-10)*
+  los libros **activos** coincidentes con su precio, **ordenados alfabéticamente por título** —
+  comparación en español, insensible a mayúsculas y acentos—. Con el término de búsqueda **vacío**
+  MUST devolver el **catálogo activo completo** con ese mismo orden, porque es la vista de catálogo:
+  sin ella, ver un libro exigiría saber de antemano cómo se llama. *(RF-10)*
 - **FR-006**: El sistema MUST permitir consultar un libro por foto, devolviendo una lista de
   candidatos ordenada por similitud para que la usuaria elija. *(RF-11)*
 
