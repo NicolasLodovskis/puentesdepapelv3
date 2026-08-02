@@ -2,7 +2,8 @@
 
 import { useActionState } from 'react';
 import { buscarLibrosAction } from '@/app/actions/busqueda';
-import type { EstadoBusqueda } from '@/app/actions/estados';
+import { ESTADO_VENTA_INICIAL, type EstadoBusqueda } from '@/app/actions/estados';
+import { venderUnidadAction } from '@/app/actions/operacion';
 
 /**
  * Búsqueda y consulta de precio (T031) — la pantalla principal, porque es la
@@ -49,20 +50,7 @@ export function Buscador({ estadoInicial }: { estadoInicial: EstadoBusqueda }) {
   );
 }
 
-function Resultados({
-  texto,
-  libros,
-}: {
-  texto: string;
-  libros: ReadonlyArray<{
-    libroId: number;
-    titulo: string;
-    editorial: string;
-    stock: number;
-    precio: number;
-    tieneFoto: boolean;
-  }>;
-}) {
+function Resultados({ texto, libros }: { texto: string; libros: ReadonlyArray<LibroListado> }) {
   const esCatalogoCompleto = texto.trim() === '';
 
   if (libros.length === 0) {
@@ -93,27 +81,81 @@ function Resultados({
             <th scope="col" className="numero">
               Precio
             </th>
+            <th scope="col">
+              <span className="oculto">Venta</span>
+            </th>
           </tr>
         </thead>
         <tbody>
           {libros.map((libro) => (
-            <tr key={libro.libroId}>
-              <td>
-                {libro.titulo}
-                {libro.tieneFoto && (
-                  <span className="marca-foto" title="Tiene foto cargada">
-                    {' '}
-                    ◧
-                  </span>
-                )}
-              </td>
-              <td>{libro.editorial}</td>
-              <td className="numero">{libro.stock}</td>
-              <td className="numero precio">$ {libro.precio.toLocaleString('es-AR')}</td>
-            </tr>
+            <FilaLibro key={libro.libroId} libro={libro} />
           ))}
         </tbody>
       </table>
     </>
+  );
+}
+
+interface LibroListado {
+  libroId: number;
+  titulo: string;
+  editorial: string;
+  stock: number;
+  precio: number;
+  tieneFoto: boolean;
+}
+
+/**
+ * La venta se hace desde el resultado de la búsqueda (T048), que es donde la
+ * librera ya está: buscó el libro para decirle el precio al cliente, y vender es
+ * el paso siguiente de esa misma conversación.
+ *
+ * Cada fila lleva su propio estado de venta. Es lo que permite que el stock que
+ * se muestra sea el que quedó, sin volver a buscar: el resultado de la búsqueda
+ * es una foto del momento en que se buscó, y después de vender esa foto está
+ * vencida sólo para esta fila.
+ */
+function FilaLibro({ libro }: { libro: LibroListado }) {
+  const [venta, vender, vendiendo] = useActionState(venderUnidadAction, ESTADO_VENTA_INICIAL);
+
+  const stock = venta.estado === 'ok' ? venta.stockResultante : libro.stock;
+
+  return (
+    <tr>
+      <td>
+        {libro.titulo}
+        {libro.tieneFoto && (
+          <span className="marca-foto" title="Tiene foto cargada">
+            {' '}
+            ◧
+          </span>
+        )}
+        {venta.estado === 'ok' && (
+          <span className="venta-hecha" role="status">
+            {' '}
+            · vendido a $ {venta.precioVenta.toLocaleString('es-AR')}
+          </span>
+        )}
+        {venta.estado === 'error' && (
+          <span className="error" role="alert">
+            {' '}
+            · {venta.mensaje}
+          </span>
+        )}
+      </td>
+      <td>{libro.editorial}</td>
+      <td className="numero">{stock}</td>
+      <td className="numero precio">$ {libro.precio.toLocaleString('es-AR')}</td>
+      <td>
+        <form action={vender}>
+          <input type="hidden" name="libroId" value={libro.libroId} />
+          {/* Sin ejemplares no hay nada que vender: el botón se deshabilita en
+              vez de dejar intentar y responder que no (FR-010). */}
+          <button type="submit" className="boton-fila" disabled={vendiendo || stock === 0}>
+            {vendiendo ? 'Vendiendo…' : 'Vender'}
+          </button>
+        </form>
+      </td>
+    </tr>
   );
 }

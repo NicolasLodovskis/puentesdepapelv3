@@ -205,6 +205,30 @@ button:disabled {
   font-size: 0.875rem;
 }
 
+/* --- Venta desde el listado ----------------------------------------------- */
+
+.boton-fila {
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.625rem;
+}
+
+.venta-hecha {
+  color: #15803d;
+  font-size: 0.875rem;
+}
+
+/* Encabezado que la columna necesita para los lectores de pantalla y que la
+   tabla no necesita mostrar. */
+.oculto {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 /* --- Importación por Excel ------------------------------------------------ */
 
 .acciones-cabecera {

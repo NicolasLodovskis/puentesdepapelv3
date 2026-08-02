@@ -139,14 +139,14 @@ Proyecto único Next.js full-stack (ver [plan.md § Project Structure](./plan.md
 
 ### Tests for User Story 3 (MANDATORY - write first, must FAIL) ⚠️
 
-- [ ] T044 [P] [US3] Test en rojo de venta en `tests/integration/us3-venta.test.ts`: stock `S → S-1`, `venta` con el precio **vigente al momento**, y `movimiento_stock` con origen `"venta"` y `venta_id` apuntando a esa venta (FR-009, FR-023, FR-024)
-- [ ] T045 [P] [US3] Test en rojo de bloqueo en `tests/integration/us3-venta-bloqueada.test.ts`: con stock `0` se impide sin alterar stock ni registrar venta; un libro **archivado** no puede venderse aunque tenga stock; y cambiar el precio después **no** altera una venta ya registrada (FR-010, FR-038)
+- [X] T044 [P] [US3] Test en rojo de venta en `tests/integration/us3-venta.test.ts`: stock `S → S-1`, `venta` con el precio **vigente al momento**, y `movimiento_stock` con origen `"venta"` y `venta_id` apuntando a esa venta (FR-009, FR-023, FR-024)
+- [X] T045 [P] [US3] Test en rojo de bloqueo en `tests/integration/us3-venta-bloqueada.test.ts`: con stock `0` se impide sin alterar stock ni registrar venta; un libro **archivado** no puede venderse aunque tenga stock; y cambiar el precio después **no** altera una venta ya registrada (FR-010, FR-038)
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] Implementar `venderUnidad` en `src/services/operacion.ts`, todo en una transacción, rechazando libros archivados (FR-038)
-- [ ] T047 [US3] Server Action de venta en `src/app/actions/operacion.ts`
-- [ ] T048 [US3] Acción de vender desde el resultado de búsqueda en `src/app/page.tsx`
+- [X] T046 [US3] Implementar `venderUnidad` en `src/services/operacion.ts`, todo en una transacción, rechazando libros archivados (FR-038)
+- [X] T047 [US3] Server Action de venta en `src/app/actions/operacion.ts`
+- [X] T048 [US3] Acción de vender desde el resultado de búsqueda en `src/app/page.tsx`
 
 > **Resuelto (CHK025)**: sólo un libro **activo** puede venderse — ahora es RF-29 / FR-038, con AC-34 y AC-35. Ya no es un supuesto.
 

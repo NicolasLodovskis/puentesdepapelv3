@@ -23,6 +23,20 @@ export type EstadoAlta =
 
 export const ESTADO_ALTA_INICIAL: EstadoAlta = { estado: 'inicial' };
 
+export type EstadoVenta =
+  | { estado: 'inicial' }
+  | {
+      estado: 'ok';
+      libroId: number;
+      titulo: string;
+      precioVenta: number;
+      /** Lo que quedó después de vender: la fila del listado lo muestra al instante. */
+      stockResultante: number;
+    }
+  | { estado: 'error'; mensaje: string };
+
+export const ESTADO_VENTA_INICIAL: EstadoVenta = { estado: 'inicial' };
+
 export type EstadoBusqueda =
   | { estado: 'inicial' }
   | { estado: 'resultados'; texto: string; campo: CampoBusqueda; libros: LibroResumen[] };
