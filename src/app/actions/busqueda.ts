@@ -1,17 +1,12 @@
 'use server';
 
 import { obtenerBase } from '@/db/conexion';
-import { buscarLibros, type CampoBusqueda, type LibroResumen } from '@/services/busqueda';
+import { buscarLibros, type CampoBusqueda } from '@/services/busqueda';
+import type { EstadoBusqueda } from './estados';
 
 /**
  * Borde UI → servicios para la búsqueda (T029).
  */
-
-export type EstadoBusqueda =
-  | { estado: 'inicial' }
-  | { estado: 'resultados'; texto: string; campo: CampoBusqueda; libros: LibroResumen[] };
-
-export const ESTADO_BUSQUEDA_INICIAL: EstadoBusqueda = { estado: 'inicial' };
 
 const CAMPOS: readonly CampoBusqueda[] = ['titulo', 'editorial', 'ambos'];
 

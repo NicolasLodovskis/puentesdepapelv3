@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { obtenerBase } from '@/db/conexion';
-import type { CampoLibro, EstadoLibro } from '@/domain/resultado';
 import { altaLibro } from '@/services/catalogo';
+import type { EstadoAlta } from './estados';
 
 /**
  * Borde UI → servicios para el catálogo (T028).
@@ -13,19 +13,6 @@ import { altaLibro } from '@/services/catalogo';
  * SQL: traduce `FormData` a la entrada del servicio y el `Resultado` a algo que
  * el formulario pueda mostrar campo por campo.
  */
-
-export type EstadoAlta =
-  | { estado: 'inicial' }
-  | { estado: 'ok'; libroId: number; titulo: string }
-  | {
-      estado: 'error';
-      mensaje: string;
-      campo?: CampoLibro;
-      /** Presente cuando el título choca con un libro existente: deja ofrecer reactivarlo. */
-      duplicado?: { libroId: number; estadoLibro: EstadoLibro };
-    };
-
-export const ESTADO_ALTA_INICIAL: EstadoAlta = { estado: 'inicial' };
 
 async function leerFoto(formData: FormData): Promise<Uint8Array | undefined> {
   const archivo = formData.get('foto');

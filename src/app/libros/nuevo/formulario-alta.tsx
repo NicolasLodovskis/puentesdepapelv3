@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useActionState } from 'react';
-import { altaLibroAction, ESTADO_ALTA_INICIAL } from '@/app/actions/catalogo';
+import { altaLibroAction } from '@/app/actions/catalogo';
+import { ESTADO_ALTA_INICIAL } from '@/app/actions/estados';
 
 /**
  * Formulario de alta (T030).

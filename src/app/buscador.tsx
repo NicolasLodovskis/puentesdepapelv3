@@ -1,7 +1,8 @@
 'use client';
 
 import { useActionState } from 'react';
-import { buscarLibrosAction, ESTADO_BUSQUEDA_INICIAL } from '@/app/actions/busqueda';
+import { buscarLibrosAction } from '@/app/actions/busqueda';
+import { ESTADO_BUSQUEDA_INICIAL } from '@/app/actions/estados';
 
 /**
  * Búsqueda y consulta de precio (T031) — la pantalla principal, porque es la
